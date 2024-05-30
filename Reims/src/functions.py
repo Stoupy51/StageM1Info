@@ -19,29 +19,77 @@ def get_rainbow_color(speed: float = 1.0) -> tuple[int,int,int,int]:
 	return (red, green, blue, 255)
 
 
-# Function that add a fog node as a colored polygon
-def add_fog_node(fog_list: list, position: tuple[float,float], fog_shape: list[tuple], fog_color: tuple) -> None:
-	""" Add a fog node as a colored polygon on the simulation
-	Args:
-		fog_list	(list):		List of fog nodes to add the new fog node to
-		position	(tuple):	Position of the fog node
-		fog_shape	(list):		Shape of the fog node
-		fog_color	(tuple):	Color of the fog node
-	"""
-	# Get ID and extract position
-	fog_id = "fog" + str(len(fog_list))
-	x, y = position
+class Resources():
+	def __init__(self, cpu: int = 100, ram: int = 1, storage: int = 1) -> None:
+		""" Resources constructor
+		Args:
+			cpu		(int):	CPU of the resources (in Percentage)
+			ram		(int):	RAM of the resources (in MB)
+			storage	(int):	Storage of the resources (in GB)
+		"""
+		self.cpu: int = cpu
+		self.ram: int = ram
+		self.storage: int = storage
+	
+	def __str__(self) -> str:
+		return f"(CPU: {self.cpu:>3}%, RAM: {self.ram:>5}MB, Storage: {self.storage:>3}GB)"
 
-	# Make new shape and add it to the simulation
-	shape = [(x + dx, y + dy) for dx, dy in fog_shape]
-	traci.polygon.add(polygonID = fog_id, shape = shape, color = fog_color, fill = True)
+## Fog nodes
+class FogNode():
+	generated_nodes: list = []
+	def __init__(self, fog_id: str, position: tuple[float,float], shape: list[tuple], color: tuple, resources: Resources = Resources()) -> None:
+		""" FogNode constructor
+		Args:
+			fog_id		(str):		ID of the fog node
+			position	(tuple):	Position of the fog node
+			shape		(list):		Shape of the fog node
+			color		(tuple):	Color of the fog node
+		"""
+		self.fog_id = fog_id
+		self.position = position
+		self.shape = shape
+		self.color = color
+		self.resources = resources
+		traci.polygon.add(polygonID = fog_id, shape = self.get_adjusted_shape(), color = color, fill = True)
+		FogNode.generated_nodes.append(self)
+	
+	def __str__(self) -> str:
+		x, y = self.position
+		return f"FogNode '{self.fog_id}' with: Position = ({x:>7.2f}, {y:>7.2f}),\tResources = {self.resources}"
+	
+	def get_adjusted_shape(self) -> list[tuple]:
+		x, y = self.position
+		return [(x + dx, y + dy) for dx, dy in self.shape]
+	
+	def get_resources(self) -> Resources:
+		return self.resources
+	def set_resources(self, resources: Resources) -> None:
+		self.resources = resources
+	
+	def set_color(self, color: tuple) -> None:
+		""" Set the color of the fog node
+		Args:
+			color	(tuple):	Color of the fog node
+		"""
+		self.color = color
+		traci.polygon.setColor(self.fog_id, color)
 
-	# Add the new fog node to the list
-	fog_list.append((fog_id, position))
-
+	@staticmethod
+	def get_node_from_id(fog_id: str):
+		""" Get a fog node from its ID
+		Args:
+			fog_id	(str):	ID of the fog node
+		Returns:
+			FogNode: Fog node if found, None otherwise
+		"""
+		nodes: list[FogNode] = FogNode.generated_nodes
+		for node in nodes:
+			if node.fog_id == fog_id:
+				return node
+		return None
 
 # Function that add multiple fog nodes at random positions and returns the result
-def add_random_nodes(nb_fog_nodes: int, offsets: tuple, center: tuple, random_divider: int, fog_shape: list[tuple], fog_color: tuple) -> list[tuple]:
+def add_random_nodes(nb_fog_nodes: int, offsets: tuple, center: tuple, random_divider: int, fog_shape: list[tuple], fog_color: tuple) -> list[FogNode]:
 	""" Add multiple fog nodes at random positions and returns the result
 	Args:
 		nb_fog_nodes	(int):		Number of fog nodes to add
@@ -51,10 +99,10 @@ def add_random_nodes(nb_fog_nodes: int, offsets: tuple, center: tuple, random_di
 		fog_shape		(list):		Shape of the fog nodes
 		fog_color		(tuple):	Color of the fog nodes
 	Returns:
-		list[tuple]: List of fog nodes
+		list[FogNode]: List of fog nodes
 	"""
-	fog_list: list[tuple] = []
-	for _ in range(nb_fog_nodes):
+	fog_list: list[FogNode] = []
+	for i in range(nb_fog_nodes):
 
 		# Get random position around the center of the map
 		x: float = random.uniform(-offsets[0], offsets[0]) / random_divider
@@ -63,7 +111,8 @@ def add_random_nodes(nb_fog_nodes: int, offsets: tuple, center: tuple, random_di
 		y += center[1]
 
 		# Add the fog node
-		add_fog_node(fog_list, (x, y), fog_shape, fog_color)
+		fog_id: str = "fog" + str(i)
+		fog_list.append(FogNode(fog_id, (x, y), fog_shape, fog_color))
 	
 	# Return the list of fog nodes
 	return fog_list
