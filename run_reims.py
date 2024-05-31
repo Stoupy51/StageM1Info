@@ -1,9 +1,11 @@
 
 # Imports
-from src.functions import *
+from src.utils import *
 from src.print import *
+from src.fog import *
 import traci
-import traci.exceptions
+import random
+random.seed(0)
 
 # Constants
 SUMO_CONFIG: str = "Reims/osm.sumocfg"
@@ -29,7 +31,7 @@ fog_list: list[FogNode] = add_random_nodes(NB_FOG_NODES, (OFFSET_X, OFFSET_Y), V
 for fog_node in fog_list:
 	cpu: int = random.randint(2, 8) * 25		# Percentage
 	ram: int = random.randint(1, 16) * 1024		# MB
-	fog_node.set_resources(Resources(cpu, ram))
+	fog_node.set_resources(Resource(cpu, ram))
 	debug(fog_node)
 
 

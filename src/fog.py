@@ -1,41 +1,13 @@
 
 # Imports
+from src.resource import Resource
 import traci
-import time
-import math
 import random
-random.seed(0)
 
-# Utils function for rainbow
-def get_rainbow_color(speed: float = 1.0) -> tuple[int,int,int,int]:
-	""" Return a rainbow color depending on the current time
-	Returns:
-		tuple[int,int,int,int]: Rainbow color
-	"""
-	current: float = time.time() * speed
-	red: int = int((1 + math.sin(current)) * 127)
-	green: int = int((1 + math.sin(current + 2)) * 127)
-	blue: int = int((1 + math.sin(current + 4)) * 127)
-	return (red, green, blue, 255)
-
-
-class Resources():
-	def __init__(self, cpu: int = 100, ram: int = 1) -> None:
-		""" Resources constructor
-		Args:
-			cpu		(int):	CPU of the resources (in Percentage)
-			ram		(int):	RAM of the resources (in MB)
-		"""
-		self.cpu: int = cpu
-		self.ram: int = ram
-	
-	def __str__(self) -> str:
-		return f"(CPU: {self.cpu:>3}%, RAM: {self.ram:>5}MB)"
-
-## Fog nodes
+# Fog class
 class FogNode():
 	generated_nodes: list = []
-	def __init__(self, fog_id: str, position: tuple[float,float], shape: list[tuple], color: tuple, resources: Resources = Resources()) -> None:
+	def __init__(self, fog_id: str, position: tuple[float,float], shape: list[tuple], color: tuple, resources: Resource = Resource()) -> None:
 		""" FogNode constructor
 		Args:
 			fog_id		(str):		ID of the fog node
@@ -53,15 +25,15 @@ class FogNode():
 	
 	def __str__(self) -> str:
 		x, y = self.position
-		return f"FogNode '{self.fog_id}' with: Position = ({x:>7.2f}, {y:>7.2f}),\tResources = {self.resources}"
+		return f"FogNode '{self.fog_id}' with: Position = ({x:>7.2f}, {y:>7.2f}),\tResource = {self.resources}"
 	
 	def get_adjusted_shape(self) -> list[tuple]:
 		x, y = self.position
 		return [(x + dx, y + dy) for dx, dy in self.shape]
 	
-	def get_resources(self) -> Resources:
+	def get_resources(self) -> Resource:
 		return self.resources
-	def set_resources(self, resources: Resources) -> None:
+	def set_resources(self, resources: Resource) -> None:
 		self.resources = resources
 	
 	def set_color(self, color: tuple) -> None:
