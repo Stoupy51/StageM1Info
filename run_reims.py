@@ -6,7 +6,7 @@ import traci
 import traci.exceptions
 
 # Constants
-SUMO_CONFIG: str = "osm.sumocfg"
+SUMO_CONFIG: str = "Reims/osm.sumocfg"
 VISUAL_CENTER: tuple[int,int] = (1200, 1600)
 FOG_COLOR: tuple = (255, 0, 0, 255)
 FOG_SIZE: int = 50

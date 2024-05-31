@@ -30,7 +30,7 @@ class Resources():
 		self.ram: int = ram
 	
 	def __str__(self) -> str:
-		return f"(CPU: {self.cpu:>3}%, RAM: {self.ram:>5}MB, Storage: {self.storage:>3}GB)"
+		return f"(CPU: {self.cpu:>3}%, RAM: {self.ram:>5}MB)"
 
 ## Fog nodes
 class FogNode():
