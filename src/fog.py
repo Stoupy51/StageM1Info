@@ -1,6 +1,6 @@
 
 # Imports
-from src.resource import Resource
+from resources import Resource
 import traci
 import random
 
