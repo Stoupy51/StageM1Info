@@ -29,8 +29,7 @@ fog_list: list[FogNode] = add_random_nodes(NB_FOG_NODES, (OFFSET_X, OFFSET_Y), V
 for fog_node in fog_list:
 	cpu: int = random.randint(2, 8) * 25		# Percentage
 	ram: int = random.randint(1, 16) * 1024		# MB
-	storage: int = random.randint(4, 20) * 10	# GB
-	fog_node.set_resources(Resources(cpu, ram, storage))
+	fog_node.set_resources(Resources(cpu, ram))
 	debug(fog_node)
 
 

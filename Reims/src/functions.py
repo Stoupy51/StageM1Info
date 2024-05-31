@@ -20,16 +20,14 @@ def get_rainbow_color(speed: float = 1.0) -> tuple[int,int,int,int]:
 
 
 class Resources():
-	def __init__(self, cpu: int = 100, ram: int = 1, storage: int = 1) -> None:
+	def __init__(self, cpu: int = 100, ram: int = 1) -> None:
 		""" Resources constructor
 		Args:
 			cpu		(int):	CPU of the resources (in Percentage)
 			ram		(int):	RAM of the resources (in MB)
-			storage	(int):	Storage of the resources (in GB)
 		"""
 		self.cpu: int = cpu
 		self.ram: int = ram
-		self.storage: int = storage
 	
 	def __str__(self) -> str:
 		return f"(CPU: {self.cpu:>3}%, RAM: {self.ram:>5}MB, Storage: {self.storage:>3}GB)"
