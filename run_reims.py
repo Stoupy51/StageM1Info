@@ -1,5 +1,6 @@
 
 # Imports
+from src.algorithms import simple_algorithm_step
 from src.utils import *
 from src.print import *
 from src.fog import *
@@ -29,9 +30,7 @@ fog_list: list[FogNode] = add_random_nodes(NB_FOG_NODES, (OFFSET_X, OFFSET_Y), V
 
 # Setup random resources for fog nodes
 for fog_node in fog_list:
-	cpu: int = random.randint(2, 8) * 25		# Percentage
-	ram: int = random.randint(1, 16) * 1024		# MB
-	fog_node.set_resources(Resource(cpu, ram))
+	fog_node.set_resources(Resource.random())
 	debug(fog_node)
 
 
@@ -39,14 +38,9 @@ for fog_node in fog_list:
 # While there are vehicles in the simulation
 while traci.simulation.getMinExpectedNumber() > 0:
 
-	# Make a step
+	# Make a step in the simulation
 	traci.simulationStep()
 
-	# Change color of every vehicles
-	for vehicle_id in traci.vehicle.getIDList():
-		traci.vehicle.setColor(vehicle_id, get_rainbow_color())
-	
-	# Change color of each fog
-	for fog_node in fog_list:
-		fog_node.set_color(get_rainbow_color(0.25))
+	# Simple algorithm step
+	simple_algorithm_step(fog_list)
 
