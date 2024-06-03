@@ -1,6 +1,6 @@
 
 # Imports
-from src.algorithms import evaluate_network, simple_algorithm_step
+from src.algorithms import evaluate_network, get_usage_variance, simple_algorithm_step
 from src.fog import FogNode, add_random_nodes
 from src.resources import Resource
 from src.vehicle import Vehicle
@@ -47,6 +47,7 @@ filtered_evaluations:	list[list[int]]		= []
 black_list:				list[TaskStates]	= [TaskStates.COMPLETED, TaskStates.FAILED]
 filtered_tasks:			list[int]			= [state.value for state in TaskStates if state not in black_list]
 legend:					list[str]			= [state.name.replace('_','').title() for state in TaskStates if state not in black_list]
+usage_variances:		list[float]			= []
 
 # While there are vehicles in the simulation
 step: int = 0
@@ -56,7 +57,7 @@ while traci.simulation.getMinExpectedNumber() > 0:
 	traci.simulationStep()
 
 	# Simple algorithm step
-	time_taken = simple_algorithm_step(fog_list)
+	time_taken = simple_algorithm_step(fog_list, usage_variances)
 	if DEBUG_PERF:
 		debug(f"Time taken for step #{step}: {time_taken:.5f}s")
 
@@ -88,6 +89,15 @@ while traci.simulation.getMinExpectedNumber() > 0:
 # Save the last plot
 plt.savefig("task_states_evaluation.png")
 info("Plot saved in 'task_states_evaluation.png'")
+
+# Plot variance
+plt.clf()
+plt.plot(usage_variances)
+plt.title("Variance of the Fog Nodes Usage")
+plt.xlabel("Simulation Step")
+plt.ylabel("Variance")
+plt.savefig("usage_variance.png")
+info("Variance plot saved in 'usage_variance.png'")
 
 # Save in a JSON file the evaluations
 import json
