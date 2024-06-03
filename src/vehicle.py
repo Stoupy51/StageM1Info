@@ -5,6 +5,8 @@ from src.task import Task, TaskStates
 from src.fog import FogNode
 import traci
 import random
+import time
+import math
 
 # Vehicle class
 class Vehicle():
@@ -50,21 +52,7 @@ class Vehicle():
 			FogNode: Nearest fog node to the vehicle
 		"""
 		vehicle_position: tuple = traci.vehicle.getPosition(self.vehicle_id)
-		nearest_fog: FogNode = None
-		min_distance: float = None
-		for fog_node in fogs:
-
-			# Calculate the distance between the vehicle and the fog node
-			fog_position: tuple = fog_node.position
-			distance: float = 0
-			for i in range(len(vehicle_position)):
-				distance += (vehicle_position[i] - fog_position[i]) ** 2
-
-			# Check if the fog node is the nearest
-			if min_distance is None or distance < min_distance:
-				min_distance = distance
-				nearest_fog = fog_node
-		
+		nearest_fog: FogNode = min(fogs, key = lambda fog: math.dist(fog.position, vehicle_position))
 		return nearest_fog
 	
 	def receive_task_result(self, task: Task) -> None:
@@ -73,6 +61,18 @@ class Vehicle():
 			task	(Task):	Task that has been resolved
 		"""
 		self.not_finished_tasks -= 1
+	
+	def assign_tasks_to_nearest_fog(self, fogs: set[FogNode]) -> None:
+		""" Assign pensing tasks to the nearest fog node
+		Args:
+			fogs	(set):	Set of fog nodes
+		"""
+		nearest_fog: FogNode = self.get_nearest_fog(fogs)
+		pending_tasks: list[Task] = [task for task in self.tasks if task.state == TaskStates.PENDING]
+		if pending_tasks:
+			for task in pending_tasks:
+				if nearest_fog.assign_task(self, task):
+					task.state = TaskStates.IN_PROGRESS
 
 
 	@staticmethod

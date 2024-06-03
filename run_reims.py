@@ -37,6 +37,7 @@ fog_list: set[FogNode] = add_random_nodes(NB_FOG_NODES, (OFFSET_X, OFFSET_Y), VI
 # Setup random resources for fog nodes
 for fog_node in fog_list:
 	fog_node.set_resources(Resource.random())
+	fog_node.set_neighbours()
 	debug(fog_node)
 
 # Evaluations filters

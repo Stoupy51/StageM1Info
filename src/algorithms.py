@@ -46,7 +46,7 @@ def simple_algorithm_step(fogs: set[FogNode]) -> float:
 	Returns:
 		float: Time taken to progress the algorithm
 	"""
-	start_time: float = time.time()
+	start_time: float = time.perf_counter()
 
 	# Delete all vehicles that are not in the simulation anymore
 	Vehicle.acknowledge_removed_vehicles()
@@ -60,23 +60,14 @@ def simple_algorithm_step(fogs: set[FogNode]) -> float:
 			Vehicle.generate_tasks(vehicle, nb_tasks = (1, 3), random_resource_args = Resource.LOW_RANDOM_RESOURCE_ARGS)
 	
 	# For each not assigned task, ask the nearest fog node to resolve the task
-	t = time.time()
-	for vehicle in Vehicle.vehicles:
-		try:
-			for task in vehicle.tasks:
-				if task.state == TaskStates.PENDING:
-					nearest_fog: FogNode = vehicle.get_nearest_fog(fogs)
-					is_assigned: bool = nearest_fog.assign_task(vehicle, task)
-					if is_assigned:
-						task.state = TaskStates.IN_PROGRESS
-		except Exception as e:
-			warning(f"Error while assigning task to the nearest fog node: {e}")
-	debug(f"Took {time.time() - t:.5f}s to assign tasks to fog nodes")
+	pending_vehicles: list[Vehicle] = [vehicle for vehicle in Vehicle.vehicles if vehicle.not_finished_tasks > 0]
+	for vehicle in pending_vehicles:
+		vehicle.assign_tasks_to_nearest_fog(fogs)
 	
 	# For each fog node, progress the tasks
 	for fog_node in fogs:
 		fog_node.progress_tasks()
 	
 	# Return the time taken to progress the algorithm
-	return time.time() - start_time
+	return time.perf_counter() - start_time
 

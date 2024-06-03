@@ -4,6 +4,7 @@ from src.resources import Resource
 from src.task import Task, TaskStates
 import traci
 import random
+import math
 
 # Fog class
 class FogNode():
@@ -56,31 +57,23 @@ class FogNode():
 		"""
 		return (self.used_resources + task.resource) <= self.resources
 	
-	def get_neighbours(self, position: tuple, radius: float) -> list['FogNode']:
-		""" Get the neighbours of the fog node within a certain radius and sorted by distance
+	def set_neighbours(self) -> None:
+		""" Set the neighbours of the fog node sorted by distance """
+		self.neighbours: list[tuple[float,'FogNode']] = [
+			(math.dist(node.position, self.position), node)
+			for node in FogNode.generated_nodes
+			if node != self
+		]
+		self.neighbours.sort(key = lambda pair: pair[0])
+	
+	def get_neighbours(self, radius: float) -> list['FogNode']:
+		""" Get the neighbours of the fog node
 		Args:
-			position	(tuple):	Position to compare
-			radius		(float):	Radius to search for neighbours
+			radius	(float):	Radius to search for neighbours
 		Returns:
-			list: List of neighbours sorted by distance
+			list: List of neighbours
 		"""
-		neighbours: list[tuple[float,'FogNode']] = []
-		radius_squared: float = radius ** 2
-		for node in FogNode.generated_nodes:
-			if node != self:
-
-				# Calculate distance
-				distance: float = 0
-				for i in range(len(position)):
-					distance += (position[i] - node.position[i]) ** 2
-
-				# Check if the node is within the radius
-				if distance <= radius_squared:
-					neighbours.append((distance, node))
-		
-		# Sort the neighbours by distance and return the nodes
-		neighbours.sort(key = lambda x: x[0])
-		return [node for _, node in neighbours]
+		return [node for distance, node in self.neighbours if distance <= radius]
 	
 	def assign_task(self, vehicle: "Vehicle", task: Task, radius: float = 10000, from_node: bool = False) -> bool:	# type: ignore
 		""" Assign a task to the vehicle
@@ -98,7 +91,7 @@ class FogNode():
 			return True
 		elif not from_node:
 			# Ask another fog node to resolve the task
-			for node in self.get_neighbours(vehicle.get_position(), radius):
+			for node in self.get_neighbours(radius):
 				if node.assign_task(vehicle, task, from_node = True):
 					return True
 			
