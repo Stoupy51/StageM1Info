@@ -7,6 +7,7 @@ from src.vehicle import Vehicle
 from src.task import Task, TaskStates
 from src.fog import FogNode
 import numpy as np
+import random
 import traci
 
 # Get number of tasks per task state
@@ -73,6 +74,9 @@ def simple_algorithm_step(fogs: set[FogNode], variances: list[float]) -> float:
 	for vehicle in Vehicle.vehicles:
 		if vehicle.not_finished_tasks == 0:
 			Vehicle.generate_tasks(vehicle, nb_tasks = (1, 3), random_resource_args = Resource.LOW_RANDOM_RESOURCE_ARGS)
+			for task in vehicle.tasks:
+				if task.state == TaskStates.PENDING:
+					task.resolving_time = random.randint(1, 5)	# Random resolving time between 1s and 5s
 	
 	# For each not assigned task, ask the nearest fog node to resolve the task
 	pending_vehicles: list[Vehicle] = [vehicle for vehicle in Vehicle.vehicles if vehicle.not_finished_tasks > 0]

@@ -46,7 +46,7 @@ evaluations:			list[list[int]]		= []
 filtered_evaluations:	list[list[int]]		= []
 black_list:				list[TaskStates]	= [TaskStates.COMPLETED, TaskStates.FAILED]
 filtered_tasks:			list[int]			= [state.value for state in TaskStates if state not in black_list]
-legend:					list[str]			= [state.name.replace('_','').title() for state in TaskStates if state not in black_list]
+legend:					list[str]			= [state.name.replace('_',' ').title() for state in TaskStates if state not in black_list]
 usage_variances:		list[float]			= []
 
 # While there are vehicles in the simulation
@@ -112,7 +112,7 @@ for state in TaskStates:
 	average: float = total / len(evaluations)
 	median: float = sorted([evaluation[state.value] for evaluation in evaluations])[len(evaluations) // 2]
 	maximum: int = max([evaluation[state.value] for evaluation in evaluations])
-	content += f"{state.name}:\n"
+	content += f"{state.name.replace('_', ' ').title()}:\n"
 	content += f"\tTotal: {total}\n"
 	content += f"\tAverage: {average:.2f}\n"
 	content += f"\tMedian: {median}\n"
