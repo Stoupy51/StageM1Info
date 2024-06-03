@@ -9,14 +9,14 @@ import random
 # Vehicle class
 class Vehicle():
 	vehicles: list["Vehicle"] = []
-	def __init__(self, vehicle_id: str, tasks: list[Task] = []) -> None:
+	def __init__(self, vehicle_id: str, tasks: list[Task] = None) -> None:
 		""" Vehicle constructor
 		Args:
 			vehicle_id	(str):		ID of the vehicle
 			tasks		(list):		List of tasks for the vehicle (default is empty)
 		"""
 		self.vehicle_id = vehicle_id
-		self.tasks = tasks
+		self.tasks = tasks if tasks is not None else []
 		Vehicle.vehicles.append(self)
 	
 	def __str__(self) -> str:
@@ -70,7 +70,7 @@ class Vehicle():
 		Args:
 			task	(Task):	Task that has been resolved
 		"""
-		self.tasks.remove(task)
+		pass
 
 
 	@staticmethod

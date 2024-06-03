@@ -29,7 +29,7 @@ class Task():
 		return f"{self.state} Task '{self.id}' with: Resource = {self.resource}, Resolving Time = {self.resolving_time}s, Time Constraint = [{limit_date}]"
 	
 	@staticmethod
-	def random(id: str, resource: Resource = Resource.random(), resolving_time: tuple[int,int,int] = (10, 60, 5), time_constraint: int|None = None):
+	def random(id: str, resource: Resource = None, resolving_time: tuple[int,int,int] = (10, 60, 5), time_constraint: int|None = None):
 		""" Generate a random task
 		Args:
 			id				(str):			ID of the task
@@ -49,6 +49,8 @@ class Task():
 			raise ValueError("Invalid Resolving Time values, step is too big")
 
 		# Return the generated task
+		if resource is None:
+			resource = Resource.random()
 		return Task(id, resource, random.randint(rt_min, rt_max) * rt_step, time_constraint)
 
 	# Progress task

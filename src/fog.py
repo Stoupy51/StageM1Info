@@ -22,7 +22,7 @@ class FogNode():
 		self.color = color
 		self.resources = resources
 		self.used_resources = Resource()
-		self.assigned_tasks: list[tuple[Vehicle,Task]] = []
+		self.assigned_tasks: list[tuple["Vehicle",Task]] = []	# type: ignore
 		traci.polygon.add(polygonID = fog_id, shape = self.get_adjusted_shape(), color = color, fill = True)
 		FogNode.generated_nodes.append(self)
 	
@@ -76,12 +76,13 @@ class FogNode():
 		neighbours.sort(key = lambda x: x[0])
 		return [node for _, node in neighbours]
 	
-	def assign_task(self, vehicle: "Vehicle", task: Task, radius: float = 10000) -> bool:
+	def assign_task(self, vehicle: "Vehicle", task: Task, radius: float = 10000, from_node: bool = False) -> bool:	# type: ignore
 		""" Assign a task to the vehicle
 		Args:
 			vehicle	(Vehicle):	Vehicle to assign the task to
 			task	(Task):		Task to assign
 			radius	(float):	Radius to search for FogNode neighbours
+			from_node	(bool):	True if the task is assigned from another node, False otherwise
 		Returns:
 			bool: True if the task was assigned, False otherwise
 		"""
@@ -89,23 +90,25 @@ class FogNode():
 			self.used_resources += task.resource
 			self.assigned_tasks.append((vehicle, task))
 			return True
-		else:
+		elif not from_node:
 			# Ask another fog node to resolve the task
 			for node in self.get_neighbours(vehicle.get_position(), radius):
-				if node != self and node.assign_task(vehicle, task):
+				if node != self and node.assign_task(vehicle, task, from_node = True):
 					return True
 			
-			# If no fog node can resolve the task, send a failure message (False) to the vehicle
-			return False
+		# If no fog node can resolve the task, send a failure message (False) to the vehicle
+		return False
 	
 	def progress_tasks(self) -> None:
 		""" Progress the tasks of the fog node, sending the results to the vehicles when completed and removing the tasks from the list """
-		for vehicle, task in list(self.assigned_tasks):
+		for pair in list(self.assigned_tasks):
+			vehicle: "Vehicle" = pair[0]	# type: ignore
+			task: Task = pair[1]
 			task.progress(1)
 			if task.state == Task.STATES[2]:
 				vehicle.receive_task_result(task)
 				self.used_resources -= task.resource
-				self.assigned_tasks.remove((vehicle, task))
+				self.assigned_tasks.remove(pair)
 
 	@staticmethod
 	def get_node_from_id(fog_id: str) -> "FogNode":
