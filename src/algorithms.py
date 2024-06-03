@@ -4,7 +4,7 @@ from src.utils import *
 from src.print import *
 from src.resources import Resource
 from src.vehicle import Vehicle
-from src.task import Task
+from src.task import Task, TaskStates
 from src.fog import FogNode
 import traci
 
@@ -14,18 +14,21 @@ def evaluate_network() -> list[int]:
 	Returns:
 		list[int]: Number of tasks for each state
 	"""
-	vehicles: list[Vehicle] = Vehicle.vehicles
-	nb_states: list[int] = [0 for _ in Task.STATES]
-	for vehicle in vehicles:
-		for task in vehicle.tasks:
-			nb_states[Task.STATES.index(task.state)] += 1
-	
-	normalized: list[float] = [100 * (nb / len(vehicles)) for nb in nb_states]
-	return normalized
+	all_tasks: list[Task] = [task for vehicle in Vehicle.vehicles for task in vehicle.tasks]
+	nb_states: list[int] = [
+		sum([1 for task in all_tasks if task.state == state])
+		for state in TaskStates
+	]
+
+	if len(Vehicle.vehicles) == 0:
+		return nb_states
+	else:
+		normalized: list[float] = [100 * (nb / len(Vehicle.vehicles)) for nb in nb_states]
+		return normalized
 
 
 # Simple Algortihm
-def simple_algorithm_step(fog_list: list[FogNode]) -> float:
+def simple_algorithm_step(fogs: set[FogNode]) -> float:
 	""" Simple algorithm step. Here are the steps:
 	- For each vehicle
 	  - If no tasks, generate tasks
@@ -39,44 +42,39 @@ def simple_algorithm_step(fog_list: list[FogNode]) -> float:
 	  - For each completed task, send the result to the vehicle and remove the task
 
 	Args:
-		fog_list	(list):	List of fog nodes
+		fogs	(set):	Set of fog nodes
 	Returns:
 		float: Time taken to progress the algorithm
 	"""
 	start_time: float = time.time()
 
 	# Delete all vehicles that are not in the simulation anymore
-	for vehicle in Vehicle.vehicles:
-		try:
-			traci.vehicle.getPosition(vehicle.vehicle_id)
-		except:
-			Vehicle.vehicles.remove(vehicle)
+	Vehicle.acknowledge_removed_vehicles()
 
 	# Create all vehicles that are not created yet
-	for vehicle_id in traci.vehicle.getIDList():
-		if Vehicle.get_vehicle_from_id(vehicle_id) is None:
-			Vehicle(vehicle_id)
+	Vehicle.acknowledge_new_vehicles()
 	
 	# Generate tasks for each vehicle that has no tasks
 	for vehicle in Vehicle.vehicles:
-		not_completed_tasks: list[Task] = [task for task in vehicle.tasks if task.state != Task.STATES[2]]
-		if len(not_completed_tasks) == 0:
-			Vehicle.generate_tasks(vehicle)
+		if vehicle.not_finished_tasks == 0:
+			Vehicle.generate_tasks(vehicle, nb_tasks = (1, 3), random_resource_args = Resource.LOW_RANDOM_RESOURCE_ARGS)
 	
 	# For each not assigned task, ask the nearest fog node to resolve the task
+	t = time.time()
 	for vehicle in Vehicle.vehicles:
 		try:
 			for task in vehicle.tasks:
-				if task.state == Task.STATES[0]:
-					nearest_fog: FogNode = vehicle.get_nearest_fog(fog_list)
+				if task.state == TaskStates.PENDING:
+					nearest_fog: FogNode = vehicle.get_nearest_fog(fogs)
 					is_assigned: bool = nearest_fog.assign_task(vehicle, task)
 					if is_assigned:
-						task.state = Task.STATES[1]
+						task.state = TaskStates.IN_PROGRESS
 		except Exception as e:
 			warning(f"Error while assigning task to the nearest fog node: {e}")
+	debug(f"Took {time.time() - t:.5f}s to assign tasks to fog nodes")
 	
 	# For each fog node, progress the tasks
-	for fog_node in fog_list:
+	for fog_node in fogs:
 		fog_node.progress_tasks()
 	
 	# Return the time taken to progress the algorithm

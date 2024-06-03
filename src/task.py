@@ -1,13 +1,18 @@
 
 # Imports
 from src.resources import Resource
+from enum import Enum
 import random
 import time
 
+class TaskStates(Enum):
+	PENDING = 0
+	IN_PROGRESS = 1
+	COMPLETED = 2
+	FAILED = 3
+
 # Task class
 class Task():
-	STATES: list[str] = ["Pending", "In Progress", "Completed", "Failed"]
-
 	def __init__(self, task_id: str, resource: Resource, resolving_time: int = 0, time_constraint: int|None = None) -> None:
 		""" Task constructor
 		Args:
@@ -20,7 +25,7 @@ class Task():
 		self.resource: Resource = resource
 		self.resolving_time: int = resolving_time
 		self.time_constraint: int = time_constraint
-		self.state: str = Task.STATES[0]
+		self.state: str = TaskStates.PENDING
 	
 	def __str__(self) -> str:
 		limit_date: str = "None"
@@ -61,7 +66,7 @@ class Task():
 		"""
 		self.resolving_time -= time_spent
 		if self.resolving_time <= 0:
-			self.state = Task.STATES[2]
+			self.state = TaskStates.COMPLETED
 		else:
-			self.state = Task.STATES[1]
+			self.state = TaskStates.IN_PROGRESS
 

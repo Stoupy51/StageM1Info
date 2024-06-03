@@ -4,7 +4,7 @@ from src.algorithms import evaluate_network, simple_algorithm_step
 from src.fog import FogNode, add_random_nodes
 from src.resources import Resource
 from src.vehicle import Vehicle
-from src.task import Task
+from src.task import Task, TaskStates
 from src.utils import *
 from src.print import *
 from matplotlib import pyplot as plt
@@ -32,7 +32,7 @@ OFFSET_X = int((MAX_X - MIN_X) / 2)
 OFFSET_Y = int((MAX_Y - MIN_Y) / 2)
 
 # Add multiple fog nodes at random positions
-fog_list: list[FogNode] = add_random_nodes(NB_FOG_NODES, (OFFSET_X, OFFSET_Y), VISUAL_CENTER, RANDOM_DIVIDER, FOG_SHAPE, FOG_COLOR)
+fog_list: set[FogNode] = add_random_nodes(NB_FOG_NODES, (OFFSET_X, OFFSET_Y), VISUAL_CENTER, RANDOM_DIVIDER, FOG_SHAPE, FOG_COLOR)
 
 # Setup random resources for fog nodes
 for fog_node in fog_list:
@@ -40,11 +40,11 @@ for fog_node in fog_list:
 	debug(fog_node)
 
 # Evaluations filters
-evaluations: list[list[int]] = []
-filtered_evaluations: list[list[int]] = []
-black_list = ["Completed", "Failed"]
-filtered_tasks = [Task.STATES.index(state) for state in Task.STATES if state not in black_list]
-legend = [state for state in Task.STATES if state not in black_list]
+evaluations:			list[list[int]]		= []
+filtered_evaluations:	list[list[int]]		= []
+black_list:				list[TaskStates]	= [TaskStates.COMPLETED, TaskStates.FAILED]
+filtered_tasks:			list[int]			= [state.value for state in TaskStates if state not in black_list]
+legend:					list[str]			= [state.name.replace('_','').title() for state in TaskStates if state not in black_list]
 
 # While there are vehicles in the simulation
 step: int = 0
@@ -70,9 +70,9 @@ while traci.simulation.getMinExpectedNumber() > 0:
 		plt.clf()
 		plt.plot(filtered_evaluations)
 		plt.legend(legend)
-		plt.title("Task States Evaluation")
+		plt.title("Percentage of Tasks for each state")
 		plt.xlabel("Simulation Step")
-		plt.ylabel("Number of Tasks per vehicle (%)")
+		plt.ylabel("Percentage of Tasks (%)")
 		plt.pause(0.0001)
 		time_taken = time.time() - time_taken
 		warning(f"Time taken to plot: {time_taken:.5f}s")
@@ -88,5 +88,21 @@ plt.savefig("task_states_evaluation.png")
 import json
 with open("task_states_evaluation.json", "w") as file:
 	file.write(json.dumps(evaluations, indent = '\t'))
+
+# Analyse values in "analyse.txt"
+content = ""
+for state in TaskStates:
+	total: int = sum([evaluation[state.value] for evaluation in evaluations])
+	average: float = total / len(evaluations)
+	median: float = sorted([evaluation[state.value] for evaluation in evaluations])[len(evaluations) // 2]
+	maximum: int = max([evaluation[state.value] for evaluation in evaluations])
+	content += f"{state.name}:\n"
+	content += f"\tTotal: {total}\n"
+	content += f"\tAverage: {average:.2f}\n"
+	content += f"\tMedian: {median}\n"
+	content += f"\tMaximum: {maximum}\n"
+	content += "\n"
+with open("analyse.txt", "w") as file:
+	file.write(content)
 
 

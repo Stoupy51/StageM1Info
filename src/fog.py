@@ -1,13 +1,13 @@
 
 # Imports
 from src.resources import Resource
-from src.task import Task
+from src.task import Task, TaskStates
 import traci
 import random
 
 # Fog class
 class FogNode():
-	generated_nodes: list['FogNode'] = []
+	generated_nodes: set['FogNode'] = set()
 	def __init__(self, fog_id: str, position: tuple[float,float], shape: list[tuple], color: tuple, resources: Resource = Resource()) -> None:
 		""" FogNode constructor
 		Args:
@@ -24,7 +24,7 @@ class FogNode():
 		self.used_resources = Resource()
 		self.assigned_tasks: list[tuple["Vehicle",Task]] = []	# type: ignore
 		traci.polygon.add(polygonID = fog_id, shape = self.get_adjusted_shape(), color = color, fill = True)
-		FogNode.generated_nodes.append(self)
+		FogNode.generated_nodes.add(self)
 	
 	def __str__(self) -> str:
 		x, y = self.position
@@ -54,7 +54,7 @@ class FogNode():
 		Returns:
 			bool: True if the fog node has enough resources, False otherwise
 		"""
-		return self.used_resources + task.resource <= self.resources
+		return (self.used_resources + task.resource) <= self.resources
 	
 	def get_neighbours(self, position: tuple, radius: float) -> list['FogNode']:
 		""" Get the neighbours of the fog node within a certain radius and sorted by distance
@@ -68,21 +68,27 @@ class FogNode():
 		radius_squared: float = radius ** 2
 		for node in FogNode.generated_nodes:
 			if node != self:
+
+				# Calculate distance
 				distance: float = 0
 				for i in range(len(position)):
 					distance += (position[i] - node.position[i]) ** 2
+
+				# Check if the node is within the radius
 				if distance <= radius_squared:
 					neighbours.append((distance, node))
+		
+		# Sort the neighbours by distance and return the nodes
 		neighbours.sort(key = lambda x: x[0])
 		return [node for _, node in neighbours]
 	
 	def assign_task(self, vehicle: "Vehicle", task: Task, radius: float = 10000, from_node: bool = False) -> bool:	# type: ignore
 		""" Assign a task to the vehicle
 		Args:
-			vehicle	(Vehicle):	Vehicle to assign the task to
-			task	(Task):		Task to assign
-			radius	(float):	Radius to search for FogNode neighbours
-			from_node	(bool):	True if the task is assigned from another node, False otherwise
+			vehicle		(Vehicle):	Vehicle to assign the task to
+			task		(Task):		Task to assign
+			radius		(float):	Radius to search for FogNode neighbours
+			from_node	(bool):		True if the task is assigned from another node, False otherwise
 		Returns:
 			bool: True if the task was assigned, False otherwise
 		"""
@@ -93,7 +99,7 @@ class FogNode():
 		elif not from_node:
 			# Ask another fog node to resolve the task
 			for node in self.get_neighbours(vehicle.get_position(), radius):
-				if node != self and node.assign_task(vehicle, task, from_node = True):
+				if node.assign_task(vehicle, task, from_node = True):
 					return True
 			
 		# If no fog node can resolve the task, send a failure message (False) to the vehicle
@@ -105,7 +111,7 @@ class FogNode():
 			vehicle: "Vehicle" = pair[0]	# type: ignore
 			task: Task = pair[1]
 			task.progress(1)
-			if task.state == Task.STATES[2]:
+			if task.state == TaskStates.COMPLETED:
 				vehicle.receive_task_result(task)
 				self.used_resources -= task.resource
 				self.assigned_tasks.remove(pair)
@@ -118,14 +124,13 @@ class FogNode():
 		Returns:
 			FogNode: Fog node if found, None otherwise
 		"""
-		nodes: list[FogNode] = FogNode.generated_nodes
-		for node in nodes:
-			if node.fog_id == fog_id:
-				return node
-		return None
+		matching = [node for node in FogNode.generated_nodes if node.fog_id == fog_id]
+		if len(matching) == 0:
+			return None
+		return matching[0]
 
 # Function that add multiple fog nodes at random positions and returns the result
-def add_random_nodes(nb_fog_nodes: int, offsets: tuple, center: tuple, random_divider: int, fog_shape: list[tuple], fog_color: tuple) -> list[FogNode]:
+def add_random_nodes(nb_fog_nodes: int, offsets: tuple, center: tuple, random_divider: int, fog_shape: list[tuple], fog_color: tuple) -> set[FogNode]:
 	""" Add multiple fog nodes at random positions and returns the result
 	Args:
 		nb_fog_nodes	(int):		Number of fog nodes to add
@@ -135,9 +140,9 @@ def add_random_nodes(nb_fog_nodes: int, offsets: tuple, center: tuple, random_di
 		fog_shape		(list):		Shape of the fog nodes
 		fog_color		(tuple):	Color of the fog nodes
 	Returns:
-		list[FogNode]: List of fog nodes
+		set[FogNode]: Set of fog nodes
 	"""
-	fog_list: list[FogNode] = []
+	fog_list: set[FogNode] = set()
 	for i in range(nb_fog_nodes):
 
 		# Get random position around the center of the map
@@ -148,7 +153,7 @@ def add_random_nodes(nb_fog_nodes: int, offsets: tuple, center: tuple, random_di
 
 		# Add the fog node
 		fog_id: str = "fog" + str(i)
-		fog_list.append(FogNode(fog_id, (x, y), fog_shape, fog_color))
+		fog_list.add(FogNode(fog_id, (x, y), fog_shape, fog_color))
 	
 	# Return the list of fog nodes
 	return fog_list
