@@ -22,6 +22,7 @@ FOG_SHAPE: list[tuple] = [(0, 0), (0, FOG_SIZE), (FOG_SIZE, FOG_SIZE), (FOG_SIZE
 NB_FOG_NODES: int = 10
 RANDOM_DIVIDER: int = 3
 PLOT_INTERVAL: int = 10
+DEBUG_PERF: bool = False
 
 # Start sumo
 traci.start(["sumo-gui", "-c", SUMO_CONFIG])
@@ -56,7 +57,8 @@ while traci.simulation.getMinExpectedNumber() > 0:
 
 	# Simple algorithm step
 	time_taken = simple_algorithm_step(fog_list)
-	debug(f"Time taken for step #{step}: {time_taken:.5f}s")
+	if DEBUG_PERF:
+		debug(f"Time taken for step #{step}: {time_taken:.5f}s")
 
 	# Evaluate the network
 	evaluation = evaluate_network()
@@ -67,7 +69,7 @@ while traci.simulation.getMinExpectedNumber() > 0:
 
 	# Make a plot with all evaluations
 	if step % PLOT_INTERVAL == 0:
-		time_taken = time.time()
+		time_taken = time.perf_counter()
 		plt.clf()
 		plt.plot(filtered_evaluations)
 		plt.legend(legend)
@@ -75,8 +77,9 @@ while traci.simulation.getMinExpectedNumber() > 0:
 		plt.xlabel("Simulation Step")
 		plt.ylabel("Percentage of Tasks (%)")
 		plt.pause(0.0001)
-		time_taken = time.time() - time_taken
-		warning(f"Time taken to plot: {time_taken:.5f}s")
+		time_taken = time.perf_counter() - time_taken
+		if DEBUG_PERF:
+			debug(f"Plotting time: {time_taken:.5f}s")
 
 	# Increment the step
 	step += 1
@@ -84,11 +87,13 @@ while traci.simulation.getMinExpectedNumber() > 0:
 
 # Save the last plot
 plt.savefig("task_states_evaluation.png")
+info("Plot saved in 'task_states_evaluation.png'")
 
 # Save in a JSON file the evaluations
 import json
 with open("task_states_evaluation.json", "w") as file:
 	file.write(json.dumps(evaluations, indent = '\t'))
+info("Evaluations saved in 'task_states_evaluation.json'")
 
 # Analyse values in "analyse.txt"
 content = ""
@@ -105,5 +110,9 @@ for state in TaskStates:
 	content += "\n"
 with open("analyse.txt", "w") as file:
 	file.write(content)
+info("Analysis saved in 'analyse.txt'")
 
+# Close the simulation
+traci.close()
+info("Simulation closed")
 
