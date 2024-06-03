@@ -21,20 +21,24 @@ class Resource():
 		return Resource(self.cpu + other.cpu, self.ram + other.ram)
 	def __sub__(self, other: "Resource") -> "Resource":
 		return Resource(self.cpu - other.cpu, self.ram - other.ram)
+	def __mul__(self, other: int) -> "Resource":
+		return Resource(self.cpu * other, self.ram * other)
+	def __truediv__(self, other) -> "Resource":
+		if isinstance(other, Resource):
+			return Resource(self.cpu / other.cpu, self.ram / other.ram)
+		return Resource(self.cpu / other, self.ram / other)
+	def __floordiv__(self, other) -> "Resource":
+		if isinstance(other, Resource):
+			return Resource(self.cpu // other.cpu, self.ram // other.ram)
+		return Resource(self.cpu // other, self.ram // other)
+	def __mod__(self, other) -> "Resource":
+		if isinstance(other, Resource):
+			return Resource(self.cpu % other.cpu, self.ram % other.ram)
+		return Resource(self.cpu % other, self.ram % other)
 	
 	# Comparison operations
-	def __lt__(self, other: "Resource") -> bool:	# Less than
-		return self.cpu < other.cpu and self.ram < other.ram
 	def __le__(self, other: "Resource") -> bool:	# Less or equal
 		return self.cpu <= other.cpu and self.ram <= other.ram
-	def __eq__(self, other: "Resource") -> bool:	# Equal
-		return self.cpu == other.cpu and self.ram == other.ram
-	def __ne__(self, other: "Resource") -> bool:	# Not equal
-		return self.cpu != other.cpu or self.ram != other.ram
-	def __gt__(self, other: "Resource") -> bool:	# Greater than
-		return self.cpu > other.cpu and self.ram > other.ram
-	def __ge__(self, other: "Resource") -> bool:	# Greater or equal
-		return self.cpu >= other.cpu and self.ram >= other.ram
 	
 	HIGH_RANDOM_RESOURCE_ARGS: tuple = (50, 200, 25), (1024, 16384, 1024)
 	LOW_RANDOM_RESOURCE_ARGS: tuple = (2, 8, 1), (64, 512, 64)

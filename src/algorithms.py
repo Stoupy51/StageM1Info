@@ -64,6 +64,9 @@ def simple_algorithm_step(fogs: set[FogNode]) -> float:
 	for vehicle in pending_vehicles:
 		vehicle.assign_tasks_to_nearest_fog(fogs)
 	
+	# Change fog color depending on their resources
+	FogNode.color_usage(fogs)
+	
 	# For each fog node, progress the tasks
 	for fog_node in fogs:
 		fog_node.progress_tasks()

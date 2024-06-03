@@ -22,7 +22,7 @@ class FogNode():
 		self.shape = shape
 		self.color = color
 		self.resources = resources
-		self.used_resources = Resource()
+		self.used_resources = Resource(cpu = 0, ram = 0)
 		self.assigned_tasks: list[tuple["Vehicle",Task]] = []	# type: ignore
 		traci.polygon.add(polygonID = fog_id, shape = self.get_adjusted_shape(), color = color, fill = True)
 		FogNode.generated_nodes.add(self)
@@ -45,8 +45,8 @@ class FogNode():
 		Args:
 			color	(tuple):	Color of the fog node
 		"""
-		self.color = color
-		traci.polygon.setColor(self.fog_id, color)
+		self.color = tuple(color)
+		traci.polygon.setColor(self.fog_id, self.color)
 	
 	def has_enough_resources(self, task: Task) -> bool:
 		""" Check if the fog node has enough resources to resolve the task
@@ -121,6 +121,21 @@ class FogNode():
 		if len(matching) == 0:
 			return None
 		return matching[0]
+	
+	@staticmethod
+	def color_usage(fogs: set['FogNode']) -> None:
+		""" Change the color of the fog nodes depending on their resources """
+		LOW_COLOR = (0, 255, 0)
+		HIGH_COLOR = (255, 0, 0)
+		for fog in fogs:
+			
+			# Get highest usage of the resource
+			usage = fog.used_resources / fog.resources
+			usage = max(usage.cpu, usage.ram)
+
+			# Calculate the color depending on the usage
+			fog.set_color( [int(LOW_COLOR[i] + (HIGH_COLOR[i] - LOW_COLOR[i]) * usage) for i in range(3)] )
+
 
 # Function that add multiple fog nodes at random positions and returns the result
 def add_random_nodes(nb_fog_nodes: int, offsets: tuple, center: tuple, random_divider: int, fog_shape: list[tuple], fog_color: tuple) -> set[FogNode]:
