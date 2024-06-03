@@ -1,9 +1,12 @@
 
 # Imports
 from src.algorithms import simple_algorithm_step
+from src.fog import FogNode, add_random_nodes
+from src.resources import Resource
+from src.task import Task
 from src.utils import *
 from src.print import *
-from src.fog import *
+from matplotlib import pyplot as plt
 import traci
 import random
 random.seed(0)
@@ -36,11 +39,26 @@ for fog_node in fog_list:
 
 
 # While there are vehicles in the simulation
+evaluations: list[list[int]] = []
 while traci.simulation.getMinExpectedNumber() > 0:
 
 	# Make a step in the simulation
 	traci.simulationStep()
 
 	# Simple algorithm step
-	simple_algorithm_step(fog_list)
+	evaluation = simple_algorithm_step(fog_list)
+	evaluations.append(evaluation)
+
+	# Print evaluation
+	debug(evaluation)
+
+	# Make a plot with all evaluations
+	plt.clf()
+	plt.plot(evaluations)
+	plt.legend(Task.STATES)
+	plt.title("Task States Evaluation")
+	plt.xlabel("Simulation Step")
+	plt.ylabel("Number of Tasks")
+	plt.pause(0.01)
+
 

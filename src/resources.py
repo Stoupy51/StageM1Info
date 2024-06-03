@@ -16,10 +16,30 @@ class Resource():
 	def __str__(self) -> str:
 		return f"(CPU: {self.cpu:>3}%, RAM: {self.ram:>5}MB)"
 	
+	# Arithmetic operations
+	def __add__(self, other: "Resource") -> "Resource":
+		return Resource(self.cpu + other.cpu, self.ram + other.ram)
+	def __sub__(self, other: "Resource") -> "Resource":
+		return Resource(self.cpu - other.cpu, self.ram - other.ram)
+	
+	# Comparison operations
+	def __lt__(self, other: "Resource") -> bool:	# Less than
+		return self.cpu < other.cpu and self.ram < other.ram
+	def __le__(self, other: "Resource") -> bool:	# Less or equal
+		return self.cpu <= other.cpu and self.ram <= other.ram
+	def __eq__(self, other: "Resource") -> bool:	# Equal
+		return self.cpu == other.cpu and self.ram == other.ram
+	def __ne__(self, other: "Resource") -> bool:	# Not equal
+		return self.cpu != other.cpu or self.ram != other.ram
+	def __gt__(self, other: "Resource") -> bool:	# Greater than
+		return self.cpu > other.cpu and self.ram > other.ram
+	def __ge__(self, other: "Resource") -> bool:	# Greater or equal
+		return self.cpu >= other.cpu and self.ram >= other.ram
+	
 	HIGH_RANDOM_RESOURCE_ARGS: tuple = (50, 200, 25), (1024, 16384, 1024)
 	LOW_RANDOM_RESOURCE_ARGS: tuple = (2, 8, 1), (64, 512, 64)
 	@staticmethod
-	def random(cpu: tuple[int,int,int] = HIGH_RANDOM_RESOURCE_ARGS[0], ram: tuple[int,int,int] = HIGH_RANDOM_RESOURCE_ARGS[1]):
+	def random(cpu: tuple[int,int,int] = HIGH_RANDOM_RESOURCE_ARGS[0], ram: tuple[int,int,int] = HIGH_RANDOM_RESOURCE_ARGS[1]) -> "Resource":
 		""" Generate a random resource
 		Args:
 			cpu		(tuple[int]):	Min, Max and Step for the CPU, default value means between 50% and 200% with step of 25%

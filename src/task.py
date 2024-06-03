@@ -1,6 +1,7 @@
 
 # Imports
-from resources import *
+from src.resources import Resource
+import random
 import time
 
 # Task class
