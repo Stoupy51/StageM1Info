@@ -39,6 +39,8 @@ class FogNode():
 		return self.resources
 	def set_resources(self, resources: Resource) -> None:
 		self.resources = resources
+	def get_used_resources(self) -> Resource:
+		return self.used_resources
 	
 	def set_color(self, color: tuple) -> None:
 		""" Set the color of the fog node
@@ -136,33 +138,33 @@ class FogNode():
 			# Calculate the color depending on the usage
 			fog.set_color( [int(LOW_COLOR[i] + (HIGH_COLOR[i] - LOW_COLOR[i]) * usage) for i in range(3)] )
 
+	# Function that add multiple fog nodes at random positions and returns the result
+	@staticmethod
+	def random_nodes(nb_fog_nodes: int, offsets: tuple, center: tuple, random_divider: int, fog_shape: list[tuple], fog_color: tuple) -> set['FogNode']:
+		""" Create multiple fog nodes at random positions and returns the result
+		Args:
+			nb_fog_nodes	(int):		Number of fog nodes to add
+			offsets			(tuple):	Offsets of the fog nodes
+			center			(tuple):	Center of the fog nodes
+			random_divider	(int):		Divider of the random position
+			fog_shape		(list):		Shape of the fog nodes
+			fog_color		(tuple):	Color of the fog nodes
+		Returns:
+			set[FogNode]: Set of fog nodes
+		"""
+		fog_list: set[FogNode] = set()
+		for i in range(nb_fog_nodes):
 
-# Function that add multiple fog nodes at random positions and returns the result
-def add_random_nodes(nb_fog_nodes: int, offsets: tuple, center: tuple, random_divider: int, fog_shape: list[tuple], fog_color: tuple) -> set[FogNode]:
-	""" Add multiple fog nodes at random positions and returns the result
-	Args:
-		nb_fog_nodes	(int):		Number of fog nodes to add
-		offsets			(tuple):	Offsets of the fog nodes
-		center			(tuple):	Center of the fog nodes
-		random_divider	(int):		Divider of the random position
-		fog_shape		(list):		Shape of the fog nodes
-		fog_color		(tuple):	Color of the fog nodes
-	Returns:
-		set[FogNode]: Set of fog nodes
-	"""
-	fog_list: set[FogNode] = set()
-	for i in range(nb_fog_nodes):
+			# Get random position around the center of the map
+			x: float = random.uniform(-offsets[0], offsets[0]) / random_divider
+			y: float = random.uniform(-offsets[1], offsets[1]) / random_divider
+			x += center[0]
+			y += center[1]
 
-		# Get random position around the center of the map
-		x: float = random.uniform(-offsets[0], offsets[0]) / random_divider
-		y: float = random.uniform(-offsets[1], offsets[1]) / random_divider
-		x += center[0]
-		y += center[1]
-
-		# Add the fog node
-		fog_id: str = "fog" + str(i)
-		fog_list.add(FogNode(fog_id, (x, y), fog_shape, fog_color))
-	
-	# Return the list of fog nodes
-	return fog_list
+			# Add the fog node
+			fog_id: str = "fog" + str(i)
+			fog_list.add(FogNode(fog_id, (x, y), fog_shape, fog_color))
+		
+		# Return the list of fog nodes
+		return fog_list
 

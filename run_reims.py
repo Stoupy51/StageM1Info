@@ -1,7 +1,7 @@
 
 # Imports
 from src.algorithms import evaluate_network, get_usage_variance, simple_algorithm_step
-from src.fog import FogNode, add_random_nodes
+from src.fog import FogNode
 from src.resources import Resource
 from src.vehicle import Vehicle
 from src.task import Task, TaskStates
@@ -33,7 +33,7 @@ OFFSET_X = int((MAX_X - MIN_X) / 2)
 OFFSET_Y = int((MAX_Y - MIN_Y) / 2)
 
 # Add multiple fog nodes at random positions
-fog_list: set[FogNode] = add_random_nodes(NB_FOG_NODES, (OFFSET_X, OFFSET_Y), VISUAL_CENTER, RANDOM_DIVIDER, FOG_SHAPE, FOG_COLOR)
+fog_list: set[FogNode] = FogNode.random_nodes(NB_FOG_NODES, (OFFSET_X, OFFSET_Y), VISUAL_CENTER, RANDOM_DIVIDER, FOG_SHAPE, FOG_COLOR)
 
 # Setup random resources for fog nodes
 for fog_node in fog_list:
