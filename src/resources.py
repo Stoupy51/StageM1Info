@@ -40,8 +40,8 @@ class Resource():
 	def __le__(self, other: "Resource") -> bool:	# Less or equal
 		return self.cpu <= other.cpu and self.ram <= other.ram
 	
-	HIGH_RANDOM_RESOURCE_ARGS: tuple = (50, 200, 25), (1024, 16384, 1024)
-	LOW_RANDOM_RESOURCE_ARGS: tuple = (2, 8, 1), (64, 512, 64)
+	HIGH_RANDOM_RESOURCE_ARGS: tuple = (500, 2000, 250), (1024, 16384, 1024)
+	LOW_RANDOM_RESOURCE_ARGS: tuple = (2, 8, 1), (8, 64, 8)
 	@staticmethod
 	def random(cpu: tuple[int,int,int] = HIGH_RANDOM_RESOURCE_ARGS[0], ram: tuple[int,int,int] = HIGH_RANDOM_RESOURCE_ARGS[1]) -> "Resource":
 		""" Generate a random resource
