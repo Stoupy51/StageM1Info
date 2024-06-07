@@ -10,12 +10,18 @@ import numpy as np
 import random
 import traci
 
-# Get number of tasks per task state
-def evaluate_network() -> list[int]:
-	""" Evaluate the network by returning the number of tasks for each state
+# Evaluation of the network
+def evaluate_network(fogs: set[FogNode]) -> tuple[float, list[int]]:
+	""" Evaluate the network by returning the charge variance and the number of tasks for each state\n
+	Args:
+		fogs	(set[FogNode]):	Set of fog nodes
 	Returns:
 		list[int]: Number of tasks for each state
 	"""
+	# Get variance
+	variance: float = get_usage_variance(fogs)
+
+	# Get all tasks
 	all_tasks: list[Task] = [task for vehicle in Vehicle.vehicles for task in vehicle.tasks]
 	nb_states: list[int] = [
 		sum([1 for task in all_tasks if task.state == state])
@@ -23,10 +29,10 @@ def evaluate_network() -> list[int]:
 	]
 
 	if len(Vehicle.vehicles) == 0:
-		return nb_states
+		return variance, nb_states
 	else:
 		normalized: list[float] = [100 * (nb / len(Vehicle.vehicles)) for nb in nb_states]
-		return normalized
+		return variance, normalized
 
 def get_usage_variance(fogs: set[FogNode]) -> float:
 	""" Get the variance of the fog nodes usage
@@ -44,7 +50,7 @@ def get_usage_variance(fogs: set[FogNode]) -> float:
 
 
 # Simple Algortihm
-def simple_algorithm_step(fogs: set[FogNode], variances: list[float]) -> float:
+def simple_algorithm_step(fogs: set[FogNode]) -> float:
 	""" Simple algorithm step. Here are the steps:
 	- For each vehicle
 	  - If no tasks, generate tasks
@@ -85,9 +91,6 @@ def simple_algorithm_step(fogs: set[FogNode], variances: list[float]) -> float:
 	
 	# Change fog color depending on their resources
 	FogNode.color_usage(fogs)
-
-	# Append usage variance
-	variances.append(get_usage_variance(fogs))
 	
 	# For each fog node, progress the tasks
 	for fog_node in fogs:

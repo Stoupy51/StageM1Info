@@ -43,11 +43,11 @@ for fog_node in fog_list:
 
 # Evaluations filters
 evaluations:			list[list[int]]		= []
+usage_variances:		list[float]			= []
 filtered_evaluations:	list[list[int]]		= []
 black_list:				list[TaskStates]	= [TaskStates.COMPLETED, TaskStates.FAILED]
 filtered_tasks:			list[int]			= [state.value for state in TaskStates if state not in black_list]
 legend:					list[str]			= [state.name.replace('_',' ').title() for state in TaskStates if state not in black_list]
-usage_variances:		list[float]			= []
 
 # While there are vehicles in the simulation
 step: int = 0
@@ -62,8 +62,9 @@ while traci.simulation.getMinExpectedNumber() > 0:
 		debug(f"Time taken for step #{step}: {time_taken:.5f}s")
 
 	# Evaluate the network
-	evaluation = evaluate_network()
+	variance, evaluation = evaluate_network()
 	evaluations.append(evaluation)
+	usage_variances.append(variance)
 
 	# Append the filtered evaluation
 	filtered_evaluations.append([evaluation[i] for i in filtered_tasks])
