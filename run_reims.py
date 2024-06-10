@@ -57,12 +57,12 @@ while traci.simulation.getMinExpectedNumber() > 0:
 	traci.simulationStep()
 
 	# Simple algorithm step
-	time_taken = simple_algorithm_step(fog_list, usage_variances)
+	time_taken = simple_algorithm_step(fog_list)
 	if DEBUG_PERF:
 		debug(f"Time taken for step #{step}: {time_taken:.5f}s")
 
 	# Evaluate the network
-	variance, evaluation = evaluate_network()
+	variance, evaluation = evaluate_network(fog_list)
 	evaluations.append(evaluation)
 	usage_variances.append(variance)
 
