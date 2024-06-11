@@ -32,7 +32,14 @@ class FogNode():
 		return f"FogNode '{self.fog_id}' with: Position = ({x:>7.2f}, {y:>7.2f}),\tResource = {self.resources}"
 	
 	def get_adjusted_shape(self) -> list[tuple]:
+
+		# Offset the position so that x and y are the center of the shape
 		x, y = self.position
+		r_x, r_y = [x // 2 for x in self.shape[-1]]
+		x -= r_x
+		y -= r_y
+
+		# Return the adjusted shape
 		return [(x + dx, y + dy) for dx, dy in self.shape]
 	
 	def get_resources(self) -> Resource:
@@ -77,13 +84,11 @@ class FogNode():
 		"""
 		return [node for distance, node in self.neighbours if distance <= radius]
 	
-	def assign_task(self, vehicle: "Vehicle", task: Task, radius: float = 10000, from_node: bool = False) -> bool:	# type: ignore
-		""" Assign a task to the vehicle
+	def assign_task(self, vehicle: "Vehicle", task: Task) -> bool:	# type: ignore
+		""" Assign a task from a vehicle to the fog node
 		Args:
 			vehicle		(Vehicle):	Vehicle to assign the task to
 			task		(Task):		Task to assign
-			radius		(float):	Radius to search for FogNode neighbours
-			from_node	(bool):		True if the task is assigned from another node, False otherwise
 		Returns:
 			bool: True if the task was assigned, False otherwise
 		"""
@@ -91,13 +96,6 @@ class FogNode():
 			self.used_resources += task.resource
 			self.assigned_tasks.append((vehicle, task))
 			return True
-		elif not from_node:
-			# Ask another fog node to resolve the task
-			for node in self.get_neighbours(radius):
-				if node.assign_task(vehicle, task, from_node = True):
-					return True
-			
-		# If no fog node can resolve the task, send a failure message (False) to the vehicle
 		return False
 	
 	def progress_tasks(self) -> None:

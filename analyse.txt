@@ -1,20 +1,20 @@
 Pending:
-	Total: 0.0
-	Average: 0.00
-	Median: 0.0
-	Maximum: 0.0
+	Total: 208902.94594125892
+	Average: 46.14
+	Median: 47.783251231527096
+	Maximum: 109.04645476772616
 
 In Progress:
-	Total: 494924.0662115421
-	Average: 109.30
-	Median: 109.09090909090908
+	Total: 361711.797054512
+	Average: 79.88
+	Median: 78.04295942720763
 	Maximum: 300.0
 
 Completed:
-	Total: 128748248.95447837
-	Average: 28433.80
-	Median: 26839.099526066348
-	Maximum: 101500.0
+	Total: 77394513.14773442
+	Average: 17092.43
+	Median: 11128.087167070218
+	Maximum: 68750.0
 
 Failed:
 	Total: 0.0

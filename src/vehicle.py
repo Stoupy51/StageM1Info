@@ -44,16 +44,15 @@ class Vehicle():
 			self.tasks.append(Task(task_id, random_resource))
 			self.not_finished_tasks += 1
 	
-	def get_nearest_fog(self, fogs: set[FogNode]) -> FogNode:
-		""" Get the nearest fog node to the vehicle
+	def get_nearest_fogs(self, fogs: set[FogNode]) -> FogNode:
+		""" Get the nearest fog nodes to the vehicle
 		Args:
 			fogs	(set):	Set of fog nodes
 		Returns:
-			FogNode: Nearest fog node to the vehicle
+			list[FogNode]: List of nearest fog nodes
 		"""
 		vehicle_position: tuple = traci.vehicle.getPosition(self.vehicle_id)
-		nearest_fog: FogNode = min(fogs, key = lambda fog: math.dist(fog.position, vehicle_position))
-		return nearest_fog
+		return sorted(fogs, key = lambda fog: math.dist(fog.position, vehicle_position))
 	
 	def receive_task_result(self, task: Task) -> None:
 		""" Receive the result of a task
@@ -61,18 +60,25 @@ class Vehicle():
 			task	(Task):	Task that has been resolved
 		"""
 		self.not_finished_tasks -= 1
+		task.state = TaskStates.COMPLETED
 	
 	def assign_tasks_to_nearest_fog(self, fogs: set[FogNode]) -> None:
 		""" Assign pensing tasks to the nearest fog node
 		Args:
 			fogs	(set):	Set of fog nodes
 		"""
-		nearest_fog: FogNode = self.get_nearest_fog(fogs)
+		nearest_fog: FogNode = self.get_nearest_fogs(fogs)[0]
 		pending_tasks: list[Task] = [task for task in self.tasks if task.state == TaskStates.PENDING]
+		nb_tasks: int = len(pending_tasks)
 		if pending_tasks:
 			for task in pending_tasks:
 				if nearest_fog.assign_task(self, task):
 					task.state = TaskStates.IN_PROGRESS
+					nb_tasks -= 1
+		
+		# Color green if no task is PENDING, blue instead
+		color: tuple = (0, 255, 0) if nb_tasks == 0 else (0, 0, 255)
+		traci.vehicle.setColor(self.vehicle_id, color)
 
 
 	@staticmethod
