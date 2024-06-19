@@ -6,38 +6,37 @@ from src.resources import Resource
 from src.vehicle import Vehicle
 from src.task import Task, TaskStates
 from src.fog import FogNode
+from config import *
 import numpy as np
 import random
 import traci
 
 # Evaluation of the network
-def evaluate_network(fogs: set[FogNode]) -> tuple[float, list[int]]:
-	""" Evaluate the network by returning the charge variance and the number of tasks for each state\n
+def evaluate_network(fogs: set[FogNode]) -> float:
+	""" Evaluate the network by calculating the Quality of Service (QoS)\n
+	The QoS is defined by:
+	- The maximization of the number of completed tasks
+	- The minimization of Fog nodes usage
+	- The minimization of Fog nodes links load (how used)
 	Args:
 		fogs	(set[FogNode]):	Set of fog nodes
 	Returns:
-		list[int]: Number of tasks for each state
+		float: Quality of Service (QoS) = k1*completed_tasks_ratio - k2*nodes_usage - k3*links_load
 	"""
-	# Get variance
-	variance: float = get_usage_variance(fogs)
+	total_tasks: list[Task] = [task for vehicle in Vehicle.vehicles for task in vehicle.tasks]
+	nb_tasks: int = len(total_tasks) if len(total_tasks) > 0 else 1
+	completed_tasks_ratio: int = sum([1 for task in total_tasks if task.state == TaskStates.COMPLETED]) / nb_tasks
+	nodes_usage: float = sum([fog.get_usage() for fog in fogs])
+	links_load: float = sum([fog.get_links_load() for fog in fogs])
 
-	# Get all tasks
-	all_tasks: list[Task] = [task for vehicle in Vehicle.vehicles for task in vehicle.tasks]
-	nb_states: list[int] = [
-		sum([1 for task in all_tasks if task.state == state])
-		for state in TaskStates
-	]
-
-	if len(Vehicle.vehicles) == 0:
-		return variance, nb_states
-	else:
-		normalized: list[float] = [100 * (nb / len(Vehicle.vehicles)) for nb in nb_states]
-		return variance, normalized
+	# Calculate the QoS and return it
+	qos: float = K1 * completed_tasks_ratio - K2 * nodes_usage - K3 * links_load
+	return qos
 
 def get_usage_variance(fogs: set[FogNode]) -> float:
 	""" Get the variance of the fog nodes usage
 	Args:
-		fogs	(set):	Set of fog nodes
+		fogs	(set[FogNode]):	Set of fog nodes
 	Returns:
 		float: Variance of the fog nodes usage
 	"""

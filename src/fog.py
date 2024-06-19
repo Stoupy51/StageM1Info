@@ -49,6 +49,20 @@ class FogNode():
 	def get_used_resources(self) -> Resource:
 		return self.used_resources
 	
+	def get_usage(self) -> float:
+		""" Get the highest usage of the resources for each type
+		Returns:
+			float: Highest usage of the resources
+		"""
+		return (self.used_resources / self.resources).max()
+	
+	def get_links_load(self) -> float:
+		""" Get the sum of the Fog nodes links load
+		Returns:
+			float: Sum of the Fog nodes links load
+		"""
+		return 0	# Not implemented
+	
 	def set_color(self, color: tuple) -> None:
 		""" Set the color of the fog node
 		Args:
@@ -66,23 +80,34 @@ class FogNode():
 		"""
 		return (self.used_resources + task.resource) <= self.resources
 	
-	def set_neighbours(self) -> None:
-		""" Set the neighbours of the fog node sorted by distance """
-		self.neighbours: list[tuple[float,'FogNode']] = [
+	def set_neighbours(self, nodes: list['FogNode'], bandwith_range: tuple[int,int]) -> None:
+		""" Set node links to neighbours of the fog node sorted by distance (using math.dist)\n
+		The method should be called after all fog nodes are created
+		Args:
+			bandwith_range	(tuple):	Range of the bandwidth for the links
+		"""
+		# Get neighbours sorted by distance
+		neighbours: list[tuple[float,'FogNode']] = [
 			(math.dist(node.position, self.position), node)
 			for node in FogNode.generated_nodes
 			if node != self
 		]
-		self.neighbours.sort(key = lambda pair: pair[0])
+		neighbours.sort(key = lambda pair: pair[0])
+
+		# Create links to each neighbour
+		self.links: list[FogNodesLink] = []
+		for distance, node in neighbours:
+			latence: int = int(distance)
+			bandwidth: int = random.randint(*bandwith_range)
+			self.links.append(FogNodesLink(node, latence, bandwidth))
+
 	
-	def get_neighbours(self, radius: float) -> list['FogNode']:
-		""" Get the neighbours of the fog node
-		Args:
-			radius	(float):	Radius to search for neighbours
+	def get_links(self) -> list['FogNodesLink']:
+		""" Get the links of the fog node
 		Returns:
-			list: List of neighbours
+			list[FogNodesLink]: List of the links of the fog node
 		"""
-		return [node for distance, node in self.neighbours if distance <= radius]
+		return self.links
 	
 	def assign_task(self, vehicle: "Vehicle", task: Task) -> bool:	# type: ignore
 		""" Assign a task from a vehicle to the fog node
@@ -165,4 +190,35 @@ class FogNode():
 		
 		# Return the list of fog nodes
 		return fog_list
+
+
+class FogNodesLink():
+	def __init__(self, other: FogNode, latence: int, bandwidth: int) -> None:
+		""" FogNodesLink constructor
+		Args:
+			other		(FogNode):	Other fog node
+			latence		(int):		Latence of the link
+			bandwidth	(int):		Bandwidth of the link (in MB/s)
+		"""
+		self.other: FogNode = other
+		self.latence: int = latence
+		self.bandwidth: int = bandwidth
+		self.charge: int = 0
+	
+	def __str__(self) -> str:
+		return f"Link to {self.other.fog_id} with: Latence = {self.latence}, Bandwidth = {self.bandwidth}MB/s"
+
+	def get_charge(self) -> int:
+		""" Get the charge of the link
+		Returns:
+			int: Charge of the link
+		"""
+		return self.charge
+	
+	def get_usage(self) -> float:
+		""" Get the usage of the link (charge divided by bandwidth)
+		Returns:
+			float: Usage of the link
+		"""
+		return self.charge / self.bandwidth
 

@@ -1,6 +1,6 @@
 
 # Imports
-from src.algorithms import evaluate_network, get_usage_variance, simple_algorithm_step
+from src.algorithms import evaluate_network, simple_algorithm_step
 from src.fog import FogNode
 from src.resources import Resource
 from src.vehicle import Vehicle
@@ -41,13 +41,8 @@ for fog_node in fog_list:
 	fog_node.set_neighbours()
 	debug(fog_node)
 
-# Evaluations filters
-evaluations:			list[list[int]]		= []
-usage_variances:		list[float]			= []
-filtered_evaluations:	list[list[int]]		= []
-black_list:				list[TaskStates]	= [TaskStates.COMPLETED, TaskStates.FAILED]
-filtered_tasks:			list[int]			= [state.value for state in TaskStates if state not in black_list]
-legend:					list[str]			= [state.name.replace('_',' ').title() for state in TaskStates if state not in black_list]
+# Evaluations
+evaluations:			list[float]		= []
 
 # While there are vehicles in the simulation
 step: int = 0
@@ -62,22 +57,17 @@ while traci.simulation.getMinExpectedNumber() > 0:
 		debug(f"Time taken for step #{step}: {time_taken:.5f}s")
 
 	# Evaluate the network
-	variance, evaluation = evaluate_network(fog_list)
+	evaluation = evaluate_network(fog_list)
 	evaluations.append(evaluation)
-	usage_variances.append(variance)
-
-	# Append the filtered evaluation
-	filtered_evaluations.append([evaluation[i] for i in filtered_tasks])
 
 	# Make a plot with all evaluations
 	if step % PLOT_INTERVAL == 0:
 		time_taken = time.perf_counter()
 		plt.clf()
-		plt.plot(filtered_evaluations)
-		plt.legend(legend)
-		plt.title("Percentage of Tasks for each state")
+		plt.plot(evaluations)
+		plt.title("Quality of Service (QoS) over time")
 		plt.xlabel("Simulation Step")
-		plt.ylabel("Percentage of Tasks (%)")
+		plt.ylabel("Quality of Service (QoS)")
 		plt.pause(0.0001)
 		time_taken = time.perf_counter() - time_taken
 		if DEBUG_PERF:
@@ -91,14 +81,6 @@ while traci.simulation.getMinExpectedNumber() > 0:
 plt.savefig("task_states_evaluation.png")
 info("Plot saved in 'task_states_evaluation.png'")
 
-# Plot variance
-plt.clf()
-plt.plot(usage_variances)
-plt.title("Variance of the Fog Nodes Usage")
-plt.xlabel("Simulation Step")
-plt.ylabel("Variance")
-plt.savefig("usage_variance.png")
-info("Variance plot saved in 'usage_variance.png'")
 
 # Save in a JSON file the evaluations
 import json
@@ -108,17 +90,16 @@ info("Evaluations saved in 'task_states_evaluation.json'")
 
 # Analyse values in "analyse.txt"
 content = ""
-for state in TaskStates:
-	total: int = sum([evaluation[state.value] for evaluation in evaluations])
-	average: float = total / len(evaluations)
-	median: float = sorted([evaluation[state.value] for evaluation in evaluations])[len(evaluations) // 2]
-	maximum: int = max([evaluation[state.value] for evaluation in evaluations])
-	content += f"{state.name.replace('_', ' ').title()}:\n"
-	content += f"\tTotal: {total}\n"
-	content += f"\tAverage: {average:.2f}\n"
-	content += f"\tMedian: {median}\n"
-	content += f"\tMaximum: {maximum}\n"
-	content += "\n"
+total: int = sum([e for e in evaluations])
+average: float = total / len(evaluations)
+median: float = sorted([e for e in evaluations])[len(evaluations) // 2]
+maximum: int = max([e for e in evaluations])
+content += f"Quality of Service:\n"
+content += f"\tTotal: {total}\n"
+content += f"\tAverage: {average:.2f}\n"
+content += f"\tMedian: {median}\n"
+content += f"\tMaximum: {maximum}\n"
+content += "\n"
 with open("analyse.txt", "w") as file:
 	file.write(content)
 info("Analysis saved in 'analyse.txt'")
