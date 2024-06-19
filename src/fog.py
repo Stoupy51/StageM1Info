@@ -49,20 +49,6 @@ class FogNode():
 	def get_used_resources(self) -> Resource:
 		return self.used_resources
 	
-	def get_usage(self) -> float:
-		""" Get the highest usage of the resources for each type
-		Returns:
-			float: Highest usage of the resources
-		"""
-		return (self.used_resources / self.resources).max()
-	
-	def get_links_load(self) -> float:
-		""" Get the sum of the Fog nodes links load
-		Returns:
-			float: Sum of the Fog nodes links load
-		"""
-		return 0	# Not implemented
-	
 	def set_color(self, color: tuple) -> None:
 		""" Set the color of the fog node
 		Args:
@@ -80,11 +66,11 @@ class FogNode():
 		"""
 		return (self.used_resources + task.resource) <= self.resources
 	
-	def set_neighbours(self, nodes: list['FogNode'], bandwith_range: tuple[int,int]) -> None:
+	def set_neighbours(self, nodes: list['FogNode'], bandwidth_range: tuple[int,int]) -> None:
 		""" Set node links to neighbours of the fog node sorted by distance (using math.dist)\n
 		The method should be called after all fog nodes are created
 		Args:
-			bandwith_range	(tuple):	Range of the bandwidth for the links
+			bandwidth_range	(tuple):	Range of the bandwidth for the links
 		"""
 		# Get neighbours sorted by distance
 		neighbours: list[tuple[float,'FogNode']] = [
@@ -98,7 +84,7 @@ class FogNode():
 		self.links: list[FogNodesLink] = []
 		for distance, node in neighbours:
 			latence: int = int(distance)
-			bandwidth: int = random.randint(*bandwith_range)
+			bandwidth: int = random.randint(*bandwidth_range)
 			self.links.append(FogNodesLink(node, latence, bandwidth))
 
 	
@@ -108,6 +94,20 @@ class FogNode():
 			list[FogNodesLink]: List of the links of the fog node
 		"""
 		return self.links
+	
+	def get_usage(self) -> float:
+		""" Get the highest usage of the resources for each type
+		Returns:
+			float: Highest usage of the resources
+		"""
+		return (self.used_resources / self.resources).max()
+	
+	def get_links_load(self) -> float:
+		""" Get the sum of the Fog nodes links load
+		Returns:
+			float: Sum of the Fog nodes links load
+		"""
+		return sum([link.get_usage() for link in self.links])
 	
 	def assign_task(self, vehicle: "Vehicle", task: Task) -> bool:	# type: ignore
 		""" Assign a task from a vehicle to the fog node

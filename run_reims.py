@@ -19,6 +19,7 @@ VISUAL_CENTER: tuple[int,int] = (1200, 1600)
 FOG_COLOR: tuple = (255, 0, 0, 255)
 FOG_SIZE: int = 50
 FOG_SHAPE: list[tuple] = [(0, 0), (0, FOG_SIZE), (FOG_SIZE, FOG_SIZE), (FOG_SIZE, 0)]
+FOG_LINK_BANDWIDTH_RANGE: tuple[int,int] = (100, 1000)
 NB_FOG_NODES: int = 10
 RANDOM_DIVIDER: int = 3
 PLOT_INTERVAL: int = 10
@@ -38,7 +39,7 @@ fog_list: set[FogNode] = FogNode.random_nodes(NB_FOG_NODES, (OFFSET_X, OFFSET_Y)
 # Setup random resources for fog nodes
 for fog_node in fog_list:
 	fog_node.set_resources(Resource.random())
-	fog_node.set_neighbours()
+	fog_node.set_neighbours(nodes = fog_list, bandwidth_range = FOG_LINK_BANDWIDTH_RANGE)
 	debug(fog_node)
 
 # Evaluations
