@@ -1,10 +1,8 @@
 
 # Imports
-from src.algorithms import evaluate_network, simple_algorithm_step
+from src.algorithms import *
 from src.fog import FogNode
 from src.resources import Resource
-from src.vehicle import Vehicle
-from src.task import Task, TaskStates
 from src.utils import *
 from src.print import *
 from matplotlib import pyplot as plt
@@ -43,7 +41,7 @@ for fog_node in fog_list:
 	debug(fog_node)
 
 # Evaluations
-evaluations:			list[float]		= []
+evaluations: list[float] = []
 
 # While there are vehicles in the simulation
 step: int = 0
@@ -52,8 +50,8 @@ while traci.simulation.getMinExpectedNumber() > 0:
 	# Make a step in the simulation
 	traci.simulationStep()
 
-	# Simple algorithm step
-	time_taken = simple_algorithm_step(fog_list)
+	# Algorithm step
+	time_taken = solution_algorithm_step(fog_list)
 	if DEBUG_PERF:
 		debug(f"Time taken for step #{step}: {time_taken:.5f}s")
 

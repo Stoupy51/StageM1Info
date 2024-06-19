@@ -109,7 +109,7 @@ class FogNode():
 		"""
 		return sum([link.get_usage() for link in self.links])
 	
-	def assign_task(self, vehicle: "Vehicle", task: Task) -> bool:	# type: ignore
+	def assign_task(self, vehicle: "Vehicle", task: Task, ask_neighbours: bool = False) -> bool:	# type: ignore
 		""" Assign a task from a vehicle to the fog node
 		Args:
 			vehicle		(Vehicle):	Vehicle to assign the task to
@@ -121,6 +121,10 @@ class FogNode():
 			self.used_resources += task.resource
 			self.assigned_tasks.append((vehicle, task))
 			return True
+		elif ask_neighbours:
+			for link in self.links:
+				if link.other.assign_task(vehicle, task):
+					return True
 		return False
 	
 	def progress_tasks(self) -> None:

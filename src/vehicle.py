@@ -62,17 +62,18 @@ class Vehicle():
 		self.not_finished_tasks -= 1
 		task.state = TaskStates.COMPLETED
 	
-	def assign_tasks_to_nearest_fog(self, fogs: set[FogNode]) -> None:
+	def assign_tasks_to_nearest_fog(self, fogs: set[FogNode], ask_neighbours: bool = False) -> None:
 		""" Assign pensing tasks to the nearest fog node
 		Args:
-			fogs	(set):	Set of fog nodes
+			fogs			(set[FogNode]):	Set of fog nodes
+			ask_neighbours	(bool):			Ask the neighbours if the nearest fog node has not enough resources
 		"""
 		nearest_fog: FogNode = self.get_nearest_fogs(fogs)[0]
 		pending_tasks: list[Task] = [task for task in self.tasks if task.state == TaskStates.PENDING]
 		nb_tasks: int = len(pending_tasks)
 		if pending_tasks:
 			for task in pending_tasks:
-				if nearest_fog.assign_task(self, task):
+				if nearest_fog.assign_task(self, task, ask_neighbours):
 					task.state = TaskStates.IN_PROGRESS
 					nb_tasks -= 1
 		

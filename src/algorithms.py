@@ -33,20 +33,6 @@ def evaluate_network(fogs: set[FogNode]) -> float:
 	qos: float = K1 * completed_tasks_ratio - K2 * nodes_usage - K3 * links_load
 	return qos
 
-def get_usage_variance(fogs: set[FogNode]) -> float:
-	""" Get the variance of the fog nodes usage
-	Args:
-		fogs	(set[FogNode]):	Set of fog nodes
-	Returns:
-		float: Variance of the fog nodes usage
-	"""
-	usage: list[Resource] = [fog.used_resources / fog.resources for fog in fogs]
-	cpu_usage: list[float] = [u.cpu for u in usage]
-	ram_usage: list[float] = [u.ram for u in usage]
-	cpu_variance: float = np.var(cpu_usage)
-	ram_variance: float = np.var(ram_usage)
-	return (cpu_variance + ram_variance) / 2
-
 
 # Simple Algortihm
 def simple_algorithm_step(fogs: set[FogNode]) -> float:
@@ -56,8 +42,7 @@ def simple_algorithm_step(fogs: set[FogNode]) -> float:
 	  - For each not assigned task
 	    - Ask the nearest fog node to resolve the task
 		- If the fog node has enough resources, assign the task and send confirmation to the vehicle so it can change the task state
-		- Else, the fog node will ask their neighbors to resolve the task
-		- If no fog node can resolve the task, a failure message is sent to the vehicle
+		- Else, a failure message is sent to the vehicle
 	- For each fog node
 	  - If tasks are assigned, progress them
 	  - For each completed task, send the result to the vehicle and remove the task
@@ -87,6 +72,58 @@ def simple_algorithm_step(fogs: set[FogNode]) -> float:
 	pending_vehicles: list[Vehicle] = [vehicle for vehicle in Vehicle.vehicles if vehicle.not_finished_tasks > 0]
 	for vehicle in pending_vehicles:
 		vehicle.assign_tasks_to_nearest_fog(fogs)
+	
+	# Change fog color depending on their resources
+	FogNode.color_usage(fogs)
+	
+	# For each fog node, progress the tasks
+	for fog_node in fogs:
+		fog_node.progress_tasks()
+	
+	# Return the time taken to progress the algorithm
+	return time.perf_counter() - start_time
+
+
+
+# Solution Algortihm
+def solution_algorithm_step(fogs: set[FogNode]) -> float:
+	""" Solution algorithm step. Here are the steps:
+	- For each vehicle
+	  - If no tasks, generate tasks
+	  - For each not assigned task
+	    - Ask the nearest fog node to resolve the task
+		- If the fog node is willing to accept (QoS), assign the task and send confirmation to the vehicle so it can change the task state
+		- Else, the fog node will ask their neighbors to resolve the task
+		- If no fog node can accept, a failure message is sent to the vehicle
+	- For each fog node
+	  - If tasks are assigned, progress them
+	  - For each completed task, send the result to the vehicle and remove the task
+
+	Args:
+		fogs	(set):	Set of fog nodes
+	Returns:
+		float: Time taken to progress the algorithm
+	"""
+	start_time: float = time.perf_counter()
+
+	# Delete all vehicles that are not in the simulation anymore
+	Vehicle.acknowledge_removed_vehicles()
+
+	# Create all vehicles that are not created yet
+	Vehicle.acknowledge_new_vehicles()
+	
+	# Generate tasks for each vehicle that has no tasks
+	for vehicle in Vehicle.vehicles:
+		if vehicle.not_finished_tasks == 0:
+			Vehicle.generate_tasks(vehicle, nb_tasks = (1, 3), random_resource_args = Resource.LOW_RANDOM_RESOURCE_ARGS)
+			for task in vehicle.tasks:
+				if task.state == TaskStates.PENDING:
+					task.resolving_time = random.randint(1, 5)	# Random resolving time between 1s and 5s
+	
+	# For each not assigned task, ask the nearest fog node to resolve the task
+	pending_vehicles: list[Vehicle] = [vehicle for vehicle in Vehicle.vehicles if vehicle.not_finished_tasks > 0]
+	for vehicle in pending_vehicles:
+		vehicle.assign_tasks_to_nearest_fog(fogs, ask_neighbours = True)
 	
 	# Change fog color depending on their resources
 	FogNode.color_usage(fogs)
