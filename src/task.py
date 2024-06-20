@@ -14,7 +14,13 @@ class TaskStates(Enum):
 # Task class
 class Task():
 	""" Task class """
-	all_tasks: dict[TaskStates, list["Task"]] = []	# Dictionary of all tasks with their states
+	# Dictionary of all tasks with their states
+	all_tasks: dict[TaskStates, list["Task"]] = {
+		TaskStates.PENDING: [],
+		TaskStates.IN_PROGRESS: [],
+		TaskStates.COMPLETED: [],
+		TaskStates.FAILED: []
+	}
 
 	def __init__(self, task_id: str, resource: Resource, resolving_time: int = 0, time_constraint: int|None = None) -> None:
 		""" Task constructor

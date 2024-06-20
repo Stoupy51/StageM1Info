@@ -19,7 +19,7 @@ def evaluate_network(fogs: set[FogNode]) -> float:
 	"""
 	# total_tasks: list[Task] = [task for vehicle in Vehicle.vehicles for task in vehicle.tasks]
 	# nb_tasks: int = len(total_tasks) if len(total_tasks) > 0 else 1
-	allocated_tasks: int = sum([1 for task in Task.all_tasks[TaskStates.IN_PROGRESS]])
+	allocated_tasks: int = len(Task.all_tasks[TaskStates.IN_PROGRESS])
 	nodes_usage: float = sum([fog.get_usage() for fog in fogs])
 	links_load: float = sum([fog.get_links_load() for fog in fogs])
 
