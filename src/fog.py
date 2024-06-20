@@ -109,28 +109,59 @@ class FogNode():
 		"""
 		return sum([link.get_usage() for link in self.links])
 	
-	def assign_task(self, vehicle: "Vehicle", task: Task, ask_neighbours: bool = False) -> bool:	# type: ignore
+	def assign_task(self, vehicle: "Vehicle", task: Task, ask_neighbours: bool = False, check_qos: bool = False) -> bool:	# type: ignore
 		""" Assign a task from a vehicle to the fog node
 		Args:
-			vehicle		(Vehicle):	Vehicle to assign the task to
-			task		(Task):		Task to assign
+			vehicle			(Vehicle):	Vehicle to assign the task to
+			task			(Task):		Task to assign
+			ask_neighbours	(bool):		Ask the neighbours if the fog node has not enough resources
+			check_qos		(bool):		Check if the Quality of Service (QoS) will increase before taking decision
 		Returns:
 			bool: True if the task was assigned, False otherwise
 		"""
-		if self.has_enough_resources(task):
-			self.used_resources += task.resource
-			self.assigned_tasks.append((vehicle, task))
-			return True
-		elif ask_neighbours:
-			for link in self.links:
-				if link.other.assign_task(vehicle, task):
+		if not check_qos:
+			if self.has_enough_resources(task):
+				self.used_resources += task.resource
+				self.assigned_tasks.append((vehicle, task))
+				return True
+			elif ask_neighbours:
+				for link in self.links:
+					if link.other.assign_task(vehicle, task):
+						return True
+		else:
+			if self.has_enough_resources(task):
+				from src.evaluations import evaluate_network
+				old_qos: float = evaluate_network(FogNode.generated_nodes)
+
+				# Assign the task and calculate the new QoS
+				old_task_state: TaskStates = task.state
+				task.progress()
+				task_tuple: tuple = (vehicle, task)
+				self.used_resources += task.resource
+				self.assigned_tasks.append(task_tuple)
+				new_qos: float = evaluate_network(FogNode.generated_nodes)
+
+				# If the QoS is better, accept
+				if new_qos >= old_qos:
 					return True
+				
+				# Otherwise, remove the task
+				task.state = old_task_state
+				self.used_resources -= task.resource
+				self.assigned_tasks.remove(task_tuple)
+
+			elif ask_neighbours:
+				for link in self.links:
+					if link.other.assign_task(vehicle, task, check_qos = check_qos):
+						return True
 		return False
-	
+
+
 	def progress_tasks(self) -> None:
 		""" Progress the tasks of the fog node, sending the results to the vehicles when completed and removing the tasks from the list """
+		from src.vehicle import Vehicle
 		for pair in list(self.assigned_tasks):
-			vehicle: "Vehicle" = pair[0]	# type: ignore
+			vehicle: Vehicle = pair[0]
 			task: Task = pair[1]
 			task.progress(1)
 			if task.state == TaskStates.COMPLETED:

@@ -11,29 +11,6 @@ import numpy as np
 import random
 import traci
 
-# Evaluation of the network
-def evaluate_network(fogs: set[FogNode]) -> float:
-	""" Evaluate the network by calculating the Quality of Service (QoS)\n
-	The QoS is defined by:
-	- The maximization of the number of completed tasks
-	- The minimization of Fog nodes usage
-	- The minimization of Fog nodes links load (how used)
-	Args:
-		fogs	(set[FogNode]):	Set of fog nodes
-	Returns:
-		float: Quality of Service (QoS) = k1*completed_tasks_ratio - k2*nodes_usage - k3*links_load
-	"""
-	total_tasks: list[Task] = [task for vehicle in Vehicle.vehicles for task in vehicle.tasks]
-	nb_tasks: int = len(total_tasks) if len(total_tasks) > 0 else 1
-	completed_tasks_ratio: int = sum([1 for task in total_tasks if task.state == TaskStates.COMPLETED]) / nb_tasks
-	nodes_usage: float = sum([fog.get_usage() for fog in fogs])
-	links_load: float = sum([fog.get_links_load() for fog in fogs])
-
-	# Calculate the QoS and return it
-	qos: float = K1 * completed_tasks_ratio - K2 * nodes_usage - K3 * links_load
-	return qos
-
-
 # Simple Algortihm
 def simple_algorithm_step(fogs: set[FogNode]) -> float:
 	""" Simple algorithm step. Here are the steps:
@@ -45,7 +22,7 @@ def simple_algorithm_step(fogs: set[FogNode]) -> float:
 		- Else, a failure message is sent to the vehicle
 	- For each fog node
 	  - If tasks are assigned, progress them
-	  - For each completed task, send the result to the vehicle and remove the task
+	  - For each allocated task, send the result to the vehicle and remove the task
 
 	Args:
 		fogs	(set):	Set of fog nodes
@@ -97,7 +74,7 @@ def solution_algorithm_step(fogs: set[FogNode]) -> float:
 		- If no fog node can accept, a failure message is sent to the vehicle
 	- For each fog node
 	  - If tasks are assigned, progress them
-	  - For each completed task, send the result to the vehicle and remove the task
+	  - For each allocated task, send the result to the vehicle and remove the task
 
 	Args:
 		fogs	(set):	Set of fog nodes
@@ -123,7 +100,7 @@ def solution_algorithm_step(fogs: set[FogNode]) -> float:
 	# For each not assigned task, ask the nearest fog node to resolve the task
 	pending_vehicles: list[Vehicle] = [vehicle for vehicle in Vehicle.vehicles if vehicle.not_finished_tasks > 0]
 	for vehicle in pending_vehicles:
-		vehicle.assign_tasks_to_nearest_fog(fogs, ask_neighbours = True)
+		vehicle.assign_tasks_to_nearest_fog(fogs, ask_neighbours = True, check_qos = True)
 	
 	# Change fog color depending on their resources
 	FogNode.color_usage(fogs)

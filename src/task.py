@@ -13,6 +13,9 @@ class TaskStates(Enum):
 
 # Task class
 class Task():
+	""" Task class """
+	all_tasks: dict[TaskStates, list["Task"]] = []	# Dictionary of all tasks with their states
+
 	def __init__(self, task_id: str, resource: Resource, resolving_time: int = 0, time_constraint: int|None = None) -> None:
 		""" Task constructor
 		Args:
@@ -25,7 +28,8 @@ class Task():
 		self.resource: Resource = resource
 		self.resolving_time: int = resolving_time
 		self.time_constraint: int = time_constraint
-		self.state: str = TaskStates.PENDING
+		self.state: TaskStates = TaskStates.PENDING
+		Task.all_tasks[self.state].append(self)
 	
 	def __str__(self) -> str:
 		limit_date: str = "None"
@@ -66,7 +70,11 @@ class Task():
 		"""
 		self.resolving_time -= time_spent
 		if self.resolving_time <= 0:
+			Task.all_tasks[self.state].remove(self)
 			self.state = TaskStates.COMPLETED
+			Task.all_tasks[self.state].append(self)
 		else:
+			Task.all_tasks[self.state].remove(self)
 			self.state = TaskStates.IN_PROGRESS
+			Task.all_tasks[self.state].append(self)
 

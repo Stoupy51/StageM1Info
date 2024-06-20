@@ -5,6 +5,7 @@ from src.fog import FogNode
 from src.resources import Resource
 from src.utils import *
 from src.print import *
+from src.evaluations import *
 from matplotlib import pyplot as plt
 import traci
 import random
@@ -20,7 +21,7 @@ FOG_SHAPE: list[tuple] = [(0, 0), (0, FOG_SIZE), (FOG_SIZE, FOG_SIZE), (FOG_SIZE
 FOG_LINK_BANDWIDTH_RANGE: tuple[int,int] = (100, 1000)
 NB_FOG_NODES: int = 10
 RANDOM_DIVIDER: int = 3
-PLOT_INTERVAL: int = 10
+PLOT_INTERVAL: int = 1
 DEBUG_PERF: bool = False
 
 # Start sumo
