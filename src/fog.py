@@ -2,6 +2,7 @@
 # Imports
 from src.resources import Resource
 from src.task import Task, TaskStates
+from src.utils import random_step
 import traci
 import random
 import math
@@ -66,11 +67,11 @@ class FogNode():
 		"""
 		return (self.used_resources + task.resource) <= self.resources
 	
-	def set_neighbours(self, nodes: list['FogNode'], bandwidth_range: tuple[int,int]) -> None:
+	def set_neighbours(self, nodes: list['FogNode'], bandwidth_range: tuple[int,int,int]) -> None:
 		""" Set node links to neighbours of the fog node sorted by distance (using math.dist)\n
 		The method should be called after all fog nodes are created
 		Args:
-			bandwidth_range	(tuple):	Range of the bandwidth for the links
+			bandwidth_range	(tuple):	Range of the bandwidth for the links (min, max, step)
 		"""
 		# Get neighbours sorted by distance
 		neighbours: list[tuple[float,'FogNode']] = [
@@ -84,7 +85,7 @@ class FogNode():
 		self.links: list[FogNodesLink] = []
 		for distance, node in neighbours:
 			latence: int = int(distance)
-			bandwidth: int = random.randint(*bandwidth_range)
+			bandwidth: int = random_step(*bandwidth_range)
 			self.links.append(FogNodesLink(node, latence, bandwidth))
 
 	

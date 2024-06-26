@@ -32,7 +32,7 @@ class Vehicle():
 		"""
 		return traci.vehicle.getPosition(self.vehicle_id)
 	
-	def generate_tasks(self, nb_tasks: tuple[int,int] = (1,3), random_resource_args: tuple = Resource.LOW_RANDOM_RESOURCE_ARGS) -> None:
+	def generate_tasks(self, nb_tasks: tuple[int,int] = (1,3), random_resource_args: tuple = Resource.LOW_RANDOM_RESOURCE_ARGS, random_costs: tuple[int,int,int] = Task.COST_RANGE) -> None:
 		""" Generate tasks for the vehicle
 		Args:
 			nb_tasks				(tuple):	Min and Max number of tasks to generate

@@ -1,5 +1,6 @@
 
 # Imports
+from src.utils import random_step
 import random
 
 # Classes for Resource and Task
@@ -58,36 +59,8 @@ class Resource():
 		Returns:
 			Resource: generated resource with random values
 		"""
-		# Get random CPU
-		cpu_min, cpu_max, cpu_step = cpu
-		if cpu_min > cpu_max or cpu_step <= 0:
-			raise ValueError("Invalid CPU values, min must be lower than max and step must be positive")
-		cpu_min //= cpu_step
-		cpu_max //= cpu_step
-		if cpu_min == cpu_max:
-			raise ValueError("Invalid CPU values, step is too big")
-		r_cpu: int = random.randint(cpu_min, cpu_max) * cpu_step
-
-		# Get random RAM
-		ram_min, ram_max, ram_step = ram
-		if ram_min > ram_max or ram_step <= 0:
-			raise ValueError("Invalid RAM values, min must be lower than max and step must be positive")
-		ram_min //= ram_step
-		ram_max //= ram_step
-		if ram_min == ram_max:
-			raise ValueError("Invalid RAM values, step is too big")
-		r_ram: int = random.randint(ram_min, ram_max) * ram_step
-
-		# Get random Storage
-		storage_min, storage_max, storage_step = storage
-		if storage_min > storage_max or storage_step <= 0:
-			raise ValueError("Invalid Storage values, min must be lower than max and step must be positive")
-		storage_min //= storage_step
-		storage_max //= storage_step
-		if storage_min == storage_max:
-			raise ValueError("Invalid Storage values, step is too big")
-		r_storage: int = random.randint(storage_min, storage_max) * storage_step
-
-		# Return the generated resource
+		r_cpu: int = random_step(*cpu)
+		r_ram: int = random_step(*ram)
+		r_storage: int = random_step(*storage)
 		return Resource(r_cpu, r_ram, r_storage)
 
