@@ -3,9 +3,9 @@
 from src.resources import Resource
 from src.task import Task, TaskStates
 from src.fog import FogNode
+from src.utils import AssignMode
 import traci
 import random
-import time
 import math
 
 # Vehicle class
@@ -60,23 +60,24 @@ class Vehicle():
 			task	(Task):	Task that has been resolved
 		"""
 		self.not_finished_tasks -= 1
-		task.state = TaskStates.COMPLETED
+		task.change_state(TaskStates.COMPLETED)
 	
-	def assign_tasks_to_nearest_fog(self, fogs: set[FogNode], ask_neighbours: bool = False, check_qos: bool = False) -> None:
+	def assign_tasks(self, fogs: set[FogNode], mode: AssignMode = AssignMode.ALL) -> None:
 		""" Assign pensing tasks to the nearest fog node
 		Args:
 			fogs			(set[FogNode]):	Set of fog nodes
-			ask_neighbours	(bool):			Ask the neighbours if the nearest fog node has not enough resources
-			check_qos		(bool):			Check the Quality of Service (QoS) before assigning the task
+			mode			(AssignMode):	Configuration of how the tasks are assigned
 		"""
+		# Get the nearest fog and the pending tasks
 		nearest_fog: FogNode = self.get_nearest_fogs(fogs)[0]
 		pending_tasks: list[Task] = [task for task in self.tasks if task.state == TaskStates.PENDING]
 		nb_tasks: int = len(pending_tasks)
-		if pending_tasks:
-			for task in pending_tasks:
-				if nearest_fog.assign_task(self, task, ask_neighbours, check_qos = check_qos):
-					task.state = TaskStates.IN_PROGRESS
-					nb_tasks -= 1
+
+		# Try to assign every tasks to the nearest fog node
+		for task in pending_tasks:
+			if nearest_fog.ask_assign_task(self, task, mode = mode):
+				task.change_state(TaskStates.IN_PROGRESS)
+				nb_tasks -= 1
 		
 		# Color green if no task is PENDING, blue instead
 		color: tuple = (0, 255, 0) if nb_tasks == 0 else (0, 0, 255)

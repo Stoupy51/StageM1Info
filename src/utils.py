@@ -1,8 +1,17 @@
 
 # Imports
+from enum import Enum
 import time
 import math
 import random
+
+# Assign modes
+class AssignMode(Enum):
+	NEAREST = "nearest"
+	WITH_NEIGHBOURS = "with_neighbours"
+	WITH_NEIGHBOURS_AND_QOS = "with_neighbours_and_qos"
+	ALL = "ALL"
+
 
 # Utils function for rainbow
 def get_rainbow_color(speed: float = 1.0) -> tuple[int,int,int,int]:

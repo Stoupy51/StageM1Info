@@ -2,7 +2,7 @@
 # Imports
 from src.resources import Resource
 from src.task import Task, TaskStates
-from src.utils import random_step
+from src.utils import AssignMode, random_step
 import traci
 import random
 import math
@@ -110,51 +110,71 @@ class FogNode():
 		"""
 		return sum([link.get_usage() for link in self.links])
 	
-	def assign_task(self, vehicle: "Vehicle", task: Task, ask_neighbours: bool = False, check_qos: bool = False) -> bool:	# type: ignore
+	def assign_task(self, vehicle: "Vehicle", task: Task) -> TaskStates:	# type: ignore
+		""" Assign a task to the fog node and returns the old state of the task
+		Args:
+			vehicle			(Vehicle):		Vehicle to assign the task to
+			task			(Task):			Task to assign
+		Returns:
+			TaskStates:		Old state of the task
+		"""
+		old_state: TaskStates = task.state
+		task.progress(0)
+		self.assigned_tasks.append((vehicle, task))
+		self.used_resources += task.resource
+		return old_state
+	
+	def revert_assign(self, assigned_task: Task, old_state: TaskStates, is_last: bool = True) -> None:
+		""" Revert the assignation of a task to the fog node
+		Args:
+			task			(Task):			Task to revert
+			old_state		(TaskStates):	Old state of the task
+		"""
+		self.used_resources -= assigned_task.resource
+		if not is_last:
+			self.assigned_tasks = [(vehicle, task) for vehicle, task in self.assigned_tasks if task is not assigned_task]
+		else:
+			self.assigned_tasks.pop()
+		assigned_task.change_state(old_state)
+	
+	def ask_assign_task(self, vehicle: "Vehicle", task: Task, mode: AssignMode) -> bool:	# type: ignore
 		""" Assign a task from a vehicle to the fog node
 		Args:
-			vehicle			(Vehicle):	Vehicle to assign the task to
-			task			(Task):		Task to assign
-			ask_neighbours	(bool):		Ask the neighbours if the fog node has not enough resources
-			check_qos		(bool):		Check if the Quality of Service (QoS) will increase before taking decision
+			vehicle			(Vehicle):		Vehicle to assign the task to
+			task			(Task):			Task to assign
+			mode			(AssignMode):	Configuration of the assign mode
 		Returns:
 			bool: True if the task was assigned, False otherwise
 		"""
-		if not check_qos:
-			if self.has_enough_resources(task):
-				self.used_resources += task.resource
-				self.assigned_tasks.append((vehicle, task))
-				return True
-			elif ask_neighbours:
-				for link in self.links:
-					if link.other.assign_task(vehicle, task):
-						return True
-		else:
-			if self.has_enough_resources(task):
-				from src.evaluations import evaluate_network
+		from src.evaluations import evaluate_network
+
+		# Boolean variables
+		check_qos: bool = mode in [AssignMode.ALL, AssignMode.WITH_NEIGHBOURS_AND_QOS]
+		ask_neighbours: bool = mode in [AssignMode.ALL, AssignMode.WITH_NEIGHBOURS, AssignMode.WITH_NEIGHBOURS_AND_QOS]
+
+		if self.has_enough_resources(task):
+
+			# If check_qos, accept the task if the new QoS is better than the old one
+			if check_qos:
 				old_qos: float = evaluate_network(FogNode.generated_nodes)
-
-				# Assign the task and calculate the new QoS
-				old_task_state: TaskStates = task.state
-				task.progress()
-				task_tuple: tuple = (vehicle, task)
-				self.used_resources += task.resource
-				self.assigned_tasks.append(task_tuple)
+				old_state: TaskStates = self.assign_task(vehicle, task)
 				new_qos: float = evaluate_network(FogNode.generated_nodes)
-
-				# If the QoS is better, accept
 				if new_qos >= old_qos:
 					return True
-				
-				# Otherwise, remove the task
-				task.state = old_task_state
-				self.used_resources -= task.resource
-				self.assigned_tasks.remove(task_tuple)
+				self.revert_assign(task, old_state)
 
-			elif ask_neighbours:
-				for link in self.links:
-					if link.other.assign_task(vehicle, task, check_qos = check_qos):
-						return True
+			# Else, accept the task as we have enough resources
+			else:
+				self.assign_task(vehicle, task)
+				return True
+
+		# If we don't have enough resources, ask the neighbours if they can assign the task
+		if ask_neighbours:
+			for link in self.links:
+				if link.other.ask_assign_task(vehicle, task):
+					return True
+		
+		# No neighbour can assign the task
 		return False
 
 

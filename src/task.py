@@ -46,6 +46,23 @@ class Task():
 			limit_date = time.strftime("%H:%M:%S", time.localtime(self.time_constraint))
 		return f"{self.state} Task '{self.id}' with: Resource = {self.resource}, Resolving Time = {self.resolving_time}s, Time Constraint = [{limit_date}]"
 	
+	def change_state(self, new_state: TaskStates) -> None:
+		""" Change the state of the task (removes it from the current state and adds it to the new state)
+		Args:
+			new_state	(TaskStates):	New state for the task
+		"""
+		# If the task is in the current state list, move it to the new state list
+		if self in Task.all_tasks[self.state]:
+			Task.all_tasks[self.state].remove(self)
+			Task.all_tasks[new_state].append(self)
+
+		# Else, add the task to the new list if it's not in it
+		elif self not in Task.all_tasks[new_state]:
+			Task.all_tasks[new_state].append(self)
+		
+		# Change the state to the new one
+		self.state = new_state
+	
 	RESOLVING_RANGE: tuple[int,int,int] = (10, 60, 5)
 	COST_RANGE: tuple[int,int,int] = (1, 10, 1)
 	@staticmethod
@@ -60,7 +77,7 @@ class Task():
 			Task: generated task with random values
 		"""
 		# Return the generated task
-		if resource is None:
+		if not resource:
 			resource = Resource.random()
 		return Task(id, resource, random_step(*resolving_time), random_step(*cost), time_constraint)
 
@@ -72,11 +89,7 @@ class Task():
 		"""
 		self.resolving_time -= time_spent
 		if self.resolving_time <= 0:
-			Task.all_tasks[self.state].remove(self)
-			self.state = TaskStates.COMPLETED
-			Task.all_tasks[self.state].append(self)
+			self.change_state(TaskStates.COMPLETED)
 		else:
-			Task.all_tasks[self.state].remove(self)
-			self.state = TaskStates.IN_PROGRESS
-			Task.all_tasks[self.state].append(self)
+			self.change_state(TaskStates.IN_PROGRESS)
 
