@@ -124,55 +124,85 @@ class FogNode():
 		self.used_resources += task.resource
 		return old_state
 	
-	def revert_assign(self, assigned_task: Task, old_state: TaskStates, is_last: bool = True) -> None:
+	def revert_assign(self, assigned_task: Task, old_state: TaskStates = None, is_last: bool = True) -> None:
 		""" Revert the assignation of a task to the fog node
 		Args:
 			task			(Task):			Task to revert
 			old_state		(TaskStates):	Old state of the task
 		"""
 		self.used_resources -= assigned_task.resource
-		if not is_last:
-			self.assigned_tasks = [(vehicle, task) for vehicle, task in self.assigned_tasks if task is not assigned_task]
-		else:
+		if is_last:
 			self.assigned_tasks.pop()
-		assigned_task.change_state(old_state)
+		else:
+			self.assigned_tasks = [(vehicle, task) for vehicle, task in self.assigned_tasks if task is not assigned_task]
+		if old_state is not None:
+			assigned_task.change_state(old_state)
 	
-	def ask_assign_task(self, vehicle: "Vehicle", task: Task, mode: AssignMode) -> bool:	# type: ignore
+	def get_replaceable_tasks(self, incomming_task: Task) -> list[tuple["Vehicle",Task]]:	# type: ignore
+		""" Get tasks that can be replaced (if we remove the task we have enough resources to accept the incomming one)\n
+		The tasks are sorted by cost and the cost is lower than the incomming task cost
+		Args:
+			incomming_task	(Task):			New task to assign to compare with
+		Returns:
+			list[tuple["Vehicle",Task]]:	List of tasks that can be replaced
+		"""
+		replaceable_tasks: list[tuple["Vehicle", Task]] = [
+			(vehicle, task) for vehicle, task in self.assigned_tasks
+			if (task.cost < incomming_task.cost)													# Task cost is lower than the incomming task cost
+			and (self.used_resources - task.resource + incomming_task.resource) <= self.resources	# We have enough resources to accept the incomming task if we remove the task
+		]
+		return sorted(replaceable_tasks, key = lambda pair: pair[1].cost)
+	
+	def ask_assign_task(self, vehicle: "Vehicle", incomming_task: Task, mode: AssignMode, from_vehicle: bool = True) -> bool:	# type: ignore
 		""" Assign a task from a vehicle to the fog node
 		Args:
 			vehicle			(Vehicle):		Vehicle to assign the task to
 			task			(Task):			Task to assign
 			mode			(AssignMode):	Configuration of the assign mode
+			from_vehicle	(bool):			True if the task is from a vehicle, False if it is from a fog node (to prevent too deep recursion)
 		Returns:
 			bool: True if the task was assigned, False otherwise
 		"""
-		from src.evaluations import evaluate_network
-
-		# Boolean variables
-		check_qos: bool = mode in [AssignMode.ALL, AssignMode.WITH_NEIGHBOURS_AND_QOS]
-		ask_neighbours: bool = mode in [AssignMode.ALL, AssignMode.WITH_NEIGHBOURS, AssignMode.WITH_NEIGHBOURS_AND_QOS]
-
-		if self.has_enough_resources(task):
+		if self.has_enough_resources(incomming_task):
+			check_qos: bool = mode in [AssignMode.ALL, AssignMode.WITH_NEIGHBOURS_AND_QOS]
 
 			# If check_qos, accept the task if the new QoS is better than the old one
 			if check_qos:
+				from src.evaluations import evaluate_network
 				old_qos: float = evaluate_network(FogNode.generated_nodes)
-				old_state: TaskStates = self.assign_task(vehicle, task)
+				old_state: TaskStates = self.assign_task(vehicle, incomming_task)
 				new_qos: float = evaluate_network(FogNode.generated_nodes)
 				if new_qos >= old_qos:
 					return True
-				self.revert_assign(task, old_state)
+				self.revert_assign(incomming_task, old_state)
 
 			# Else, accept the task as we have enough resources
 			else:
-				self.assign_task(vehicle, task)
+				self.assign_task(vehicle, incomming_task)
 				return True
+		
+		# If the task is from a vehicle, try communication with other fog nodes
+		if from_vehicle:
 
-		# If we don't have enough resources, ask the neighbours if they can assign the task
-		if ask_neighbours:
-			for link in self.links:
-				if link.other.ask_assign_task(vehicle, task):
-					return True
+			# Get tasks that can be replaced with cost priority
+			cost_priority: bool = mode in [AssignMode.ALL, AssignMode.COST_PRIORITY]
+			if cost_priority:
+				replaceable_tasks: list[tuple["Vehicle",Task]] = self.get_replaceable_tasks(incomming_task)
+
+				# For each replaceable tasks, try to assign to neighbours and stop if any accept
+				for vehicle, task in replaceable_tasks:
+					for link in self.links:
+						if link.other.ask_assign_task(vehicle, task, mode = mode, from_vehicle = False):
+							self.revert_assign(task, is_last = False)
+							self.assign_task(vehicle, incomming_task)
+							return True
+
+			# If we don't have enough resources, ask the neighbours if they can assign the task
+			ask_neighbours: bool = mode in [AssignMode.ALL, AssignMode.WITH_NEIGHBOURS, AssignMode.WITH_NEIGHBOURS_AND_QOS]
+			if ask_neighbours:
+				for link in self.links:
+					if link.other.ask_assign_task(vehicle, incomming_task, mode = mode, from_vehicle = False):
+						return True
 		
 		# No neighbour can assign the task
 		return False

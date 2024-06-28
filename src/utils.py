@@ -10,6 +10,7 @@ class AssignMode(Enum):
 	NEAREST = "nearest"
 	WITH_NEIGHBOURS = "with_neighbours"
 	WITH_NEIGHBOURS_AND_QOS = "with_neighbours_and_qos"
+	COST_PRIORITY = "cost_priority"
 	ALL = "ALL"
 
 
