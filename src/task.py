@@ -44,7 +44,7 @@ class Task():
 		limit_date: str = "None"
 		if self.time_constraint is not None:
 			limit_date = time.strftime("%H:%M:%S", time.localtime(self.time_constraint))
-		return f"{self.state} Task '{self.id}' with: Resource = {self.resource}, Resolving Time = {self.resolving_time}s, Time Constraint = [{limit_date}]"
+		return f"{self.state} Task '{self.id}' with: Resource = {self.resource}, Resolving Time = {self.resolving_time}s, Cost = {self.cost}€, Time Constraint = [{limit_date}]"
 	
 	def change_state(self, new_state: TaskStates) -> None:
 		""" Change the state of the task (removes it from the current state and adds it to the new state)

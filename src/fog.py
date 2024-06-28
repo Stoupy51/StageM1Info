@@ -172,7 +172,7 @@ class FogNode():
 				old_qos: float = evaluate_network(FogNode.generated_nodes)
 				old_state: TaskStates = self.assign_task(vehicle, incomming_task)
 				new_qos: float = evaluate_network(FogNode.generated_nodes)
-				if new_qos >= old_qos:
+				if new_qos > old_qos:
 					return True
 				self.revert_assign(incomming_task, old_state)
 
@@ -187,7 +187,7 @@ class FogNode():
 			# Get tasks that can be replaced with cost priority
 			cost_priority: bool = mode in [AssignMode.ALL, AssignMode.COST_PRIORITY]
 			if cost_priority:
-				replaceable_tasks: list[tuple["Vehicle",Task]] = self.get_replaceable_tasks(incomming_task)
+				replaceable_tasks: list[tuple["Vehicle",Task]] = self.get_replaceable_tasks(incomming_task)	# type: ignore
 
 				# For each replaceable tasks, try to assign to neighbours and stop if any accept
 				for vehicle, task in replaceable_tasks:
@@ -195,6 +195,7 @@ class FogNode():
 						if link.other.ask_assign_task(vehicle, task, mode = mode, from_vehicle = False):
 							self.revert_assign(task, is_last = False)
 							self.assign_task(vehicle, incomming_task)
+							print(f"Replaced task {task} with {incomming_task}")
 							return True
 
 			# If we don't have enough resources, ask the neighbours if they can assign the task

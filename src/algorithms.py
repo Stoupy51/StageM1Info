@@ -92,10 +92,13 @@ def solution_algorithm_step(fogs: set[FogNode]) -> float:
 	# Generate tasks for each vehicle that has no tasks
 	for vehicle in Vehicle.vehicles:
 		if vehicle.not_finished_tasks == 0:
-			Vehicle.generate_tasks(vehicle, nb_tasks = (1, 3), random_resource_args = Resource.LOW_RANDOM_RESOURCE_ARGS)
-			for task in vehicle.tasks:
-				if task.state == TaskStates.PENDING:
-					task.resolving_time = random.randint(1, 5)	# Random resolving time between 1s and 5s
+			Vehicle.generate_tasks(
+				vehicle,
+				nb_tasks = (1, 3),
+				random_resource_args = Resource.LOW_RANDOM_RESOURCE_ARGS,
+				random_resolution_times = (1, 5, 1),
+				random_costs = Task.COST_RANGE
+			)
 	
 	# For each not assigned task, ask the nearest fog node to resolve the task
 	pending_vehicles: list[Vehicle] = [vehicle for vehicle in Vehicle.vehicles if vehicle.not_finished_tasks > 0]

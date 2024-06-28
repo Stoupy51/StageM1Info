@@ -3,7 +3,7 @@
 from src.resources import Resource
 from src.task import Task, TaskStates
 from src.fog import FogNode
-from src.utils import AssignMode
+from src.utils import AssignMode, random_step
 import traci
 import random
 import math
@@ -32,16 +32,20 @@ class Vehicle():
 		"""
 		return traci.vehicle.getPosition(self.vehicle_id)
 	
-	def generate_tasks(self, nb_tasks: tuple[int,int] = (1,3), random_resource_args: tuple = Resource.LOW_RANDOM_RESOURCE_ARGS, random_costs: tuple[int,int,int] = Task.COST_RANGE) -> None:
+	def generate_tasks(self, nb_tasks: tuple[int,int] = (1,3), random_resource_args: tuple = Resource.LOW_RANDOM_RESOURCE_ARGS, random_resolution_times: tuple = (1, 5, 1), random_costs: tuple[int,int,int] = Task.COST_RANGE) -> None:
 		""" Generate tasks for the vehicle
 		Args:
 			nb_tasks				(tuple):	Min and Max number of tasks to generate
 			random_resource_args	(tuple):	Arguments for the random resource generation
+			random_resolving_time	(tuple):	Min, Max and step for the random resolving time generation
+			random_costs			(tuple):	Min, Max and step for the random cost generation
 		"""
 		for i in range(random.randint(*nb_tasks)):
-			task_id = f"{self.vehicle_id}_task_{i}"						# Generate task ID based on vehicle ID
-			random_resource = Resource.random(*random_resource_args)	# Generate random resource with low values
-			self.tasks.append(Task(task_id, random_resource))
+			task_id = f"{self.vehicle_id}_task_{i}"							# Generate task ID based on vehicle ID
+			random_resource = Resource.random(*random_resource_args)		# Generate random resource with low values
+			random_resolving_time = random_step(*random_resolution_times)	# Generate random resolving time
+			random_cost = random_step(*random_costs)						# Generate random cost
+			self.tasks.append(Task(task_id, resource = random_resource, resolving_time = random_resolving_time, cost = random_cost))
 			self.not_finished_tasks += 1
 	
 	def get_nearest_fogs(self, fogs: set[FogNode]) -> FogNode:
