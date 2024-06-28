@@ -6,12 +6,14 @@ import math
 import random
 
 # Assign modes
-class AssignMode(Enum):
-	NEAREST = "nearest"
-	WITH_NEIGHBOURS = "with_neighbours"
-	WITH_NEIGHBOURS_AND_QOS = "with_neighbours_and_qos"
-	COST_PRIORITY = "cost_priority"
-	ALL = "ALL"
+class AssignMode():
+	def __init__(self, neighbours: bool = False, qos: bool = False, cost: bool = False):
+		self.neighbours = neighbours
+		self.qos = qos
+		self.cost = cost
+
+	ALL: "AssignMode" = None
+AssignMode.ALL = AssignMode(True, True, True)
 
 
 # Utils function for rainbow

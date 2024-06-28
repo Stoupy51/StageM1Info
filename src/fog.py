@@ -146,7 +146,7 @@ class FogNode():
 		Returns:
 			list[tuple["Vehicle",Task]]:	List of tasks that can be replaced
 		"""
-		replaceable_tasks: list[tuple["Vehicle", Task]] = [
+		replaceable_tasks: list[tuple["Vehicle", Task]] = [		# type: ignore
 			(vehicle, task) for vehicle, task in self.assigned_tasks
 			if (task.cost < incomming_task.cost)													# Task cost is lower than the incomming task cost
 			and (self.used_resources - task.resource + incomming_task.resource) <= self.resources	# We have enough resources to accept the incomming task if we remove the task
@@ -164,15 +164,14 @@ class FogNode():
 			bool: True if the task was assigned, False otherwise
 		"""
 		if self.has_enough_resources(incomming_task):
-			check_qos: bool = mode in [AssignMode.ALL, AssignMode.WITH_NEIGHBOURS_AND_QOS]
 
 			# If check_qos, accept the task if the new QoS is better than the old one
-			if check_qos:
+			if mode.qos:
 				from src.evaluations import evaluate_network
 				old_qos: float = evaluate_network(FogNode.generated_nodes)
 				old_state: TaskStates = self.assign_task(vehicle, incomming_task)
 				new_qos: float = evaluate_network(FogNode.generated_nodes)
-				if new_qos > old_qos:
+				if new_qos >= old_qos:
 					return True
 				self.revert_assign(incomming_task, old_state)
 
@@ -185,22 +184,20 @@ class FogNode():
 		if from_vehicle:
 
 			# Get tasks that can be replaced with cost priority
-			cost_priority: bool = mode in [AssignMode.ALL, AssignMode.COST_PRIORITY]
-			if cost_priority:
+			if mode.cost:
 				replaceable_tasks: list[tuple["Vehicle",Task]] = self.get_replaceable_tasks(incomming_task)	# type: ignore
 
 				# For each replaceable tasks, try to assign to neighbours and stop if any accept
 				for vehicle, task in replaceable_tasks:
 					for link in self.links:
-						if link.other.ask_assign_task(vehicle, task, mode = mode, from_vehicle = False):
+						if link.other.ask_assign_task(vehicle, task, mode = AssignMode(), from_vehicle = False):
 							self.revert_assign(task, is_last = False)
 							self.assign_task(vehicle, incomming_task)
 							print(f"Replaced task {task} with {incomming_task}")
 							return True
 
 			# If we don't have enough resources, ask the neighbours if they can assign the task
-			ask_neighbours: bool = mode in [AssignMode.ALL, AssignMode.WITH_NEIGHBOURS, AssignMode.WITH_NEIGHBOURS_AND_QOS]
-			if ask_neighbours:
+			if mode.neighbours:
 				for link in self.links:
 					if link.other.ask_assign_task(vehicle, incomming_task, mode = mode, from_vehicle = False):
 						return True
