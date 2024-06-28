@@ -39,7 +39,7 @@ fog_list: set[FogNode] = FogNode.random_nodes(NB_FOG_NODES, (OFFSET_X, OFFSET_Y)
 for fog_node in fog_list:
 	fog_node.set_resources(Resource.random())
 	fog_node.set_neighbours(nodes = fog_list, bandwidth_range = FOG_LINK_BANDWIDTH_RANGE)
-	debug(fog_node)
+	info(fog_node)
 
 # Evaluations
 evaluations: list[float] = []

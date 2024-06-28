@@ -3,6 +3,7 @@
 from src.resources import Resource
 from src.task import Task, TaskStates
 from src.utils import AssignMode, random_step
+from src.print import *
 import traci
 import random
 import math
@@ -185,15 +186,14 @@ class FogNode():
 
 			# Get tasks that can be replaced with cost priority
 			if mode.cost:
-				replaceable_tasks: list[tuple["Vehicle",Task]] = self.get_replaceable_tasks(incomming_task)	# type: ignore
-
+				
 				# For each replaceable tasks, try to assign to neighbours and stop if any accept
-				for vehicle, task in replaceable_tasks:
+				for vehicle, task in self.get_replaceable_tasks(incomming_task):
 					for link in self.links:
 						if link.other.ask_assign_task(vehicle, task, mode = AssignMode(), from_vehicle = False):
 							self.revert_assign(task, is_last = False)
 							self.assign_task(vehicle, incomming_task)
-							print(f"Replaced task {task} with {incomming_task}")
+							debug(f"Moved task {task.id} from {self.fog_id} to {link.other.fog_id} because cost {task.cost} is lower than {incomming_task.cost}")
 							return True
 
 			# If we don't have enough resources, ask the neighbours if they can assign the task
