@@ -1,16 +1,18 @@
 
 # Imports
+from __future__ import annotations
 from src.resources import Resource
 from src.task import Task, TaskStates
-from src.utils import AssignMode, random_step
+from src.utils import *
 from src.print import *
 import traci
 import random
 import math
 
+
 # Fog class
 class FogNode():
-	generated_nodes: set['FogNode'] = set()
+	generated_nodes: set[FogNode] = set()
 	def __init__(self, fog_id: str, position: tuple[float,float], shape: list[tuple], color: tuple, resources: Resource = Resource()) -> None:
 		""" FogNode constructor
 		Args:
@@ -19,12 +21,13 @@ class FogNode():
 			shape		(list):		Shape of the fog node
 			color		(tuple):	Color of the fog node
 		"""
-		self.fog_id = fog_id
-		self.position = position
-		self.shape = shape
-		self.color = color
-		self.resources = resources
+		self.fog_id: str = fog_id
+		self.position: tuple[float,float] = position
+		self.shape: list[tuple] = shape
+		self.color: tuple = color
+		self.resources: Resource = resources
 		self.used_resources = Resource(cpu = 0, ram = 0)
+		self.usage: float = 0.0
 		self.assigned_tasks: list[tuple["Vehicle",Task]] = []	# type: ignore
 		traci.polygon.add(polygonID = fog_id, shape = self.get_adjusted_shape(), color = color, fill = True)
 		FogNode.generated_nodes.add(self)
@@ -34,7 +37,7 @@ class FogNode():
 		return f"FogNode '{self.fog_id}' with: Position = ({x:>7.2f}, {y:>7.2f}),\tResource = {self.resources}"
 	
 	def get_adjusted_shape(self) -> list[tuple]:
-
+		""" Calculate the adjusted shape of the fog node """
 		# Offset the position so that x and y are the center of the shape
 		x, y = self.position
 		r_x, r_y = [x // 2 for x in self.shape[-1]]
@@ -68,16 +71,16 @@ class FogNode():
 		"""
 		return (self.used_resources + task.resource) <= self.resources
 	
-	def set_neighbours(self, nodes: list['FogNode'], bandwidth_range: tuple[int,int,int]) -> None:
+	def set_neighbours(self, nodes: list[FogNode], bandwidth_range: tuple[int,int,int]) -> None:
 		""" Set node links to neighbours of the fog node sorted by distance (using math.dist)\n
 		The method should be called after all fog nodes are created
 		Args:
 			bandwidth_range	(tuple):	Range of the bandwidth for the links (min, max, step)
 		"""
 		# Get neighbours sorted by distance
-		neighbours: list[tuple[float,'FogNode']] = [
+		neighbours: list[tuple[float,FogNode]] = [
 			(math.dist(node.position, self.position), node)
-			for node in FogNode.generated_nodes
+			for node in nodes
 			if node != self
 		]
 		neighbours.sort(key = lambda pair: pair[0])
@@ -90,20 +93,24 @@ class FogNode():
 			self.links.append(FogNodesLink(node, latence, bandwidth))
 
 	
-	def get_links(self) -> list['FogNodesLink']:
+	def get_links(self) -> list[FogNodesLink]:
 		""" Get the links of the fog node
 		Returns:
 			list[FogNodesLink]: List of the links of the fog node
 		"""
 		return self.links
 	
+	def calculate_usage(self) -> None:
+		""" Calculate the usage variable (the highest usage of the resources for each type) """
+		self.usage: float = (self.used_resources / self.resources).max()
+
 	def get_usage(self) -> float:
 		""" Get the highest usage of the resources for each type
 		Returns:
 			float: Highest usage of the resources
 		"""
-		return (self.used_resources / self.resources).max()
-	
+		return self.usage
+
 	def get_links_load(self) -> float:
 		""" Get the sum of the Fog nodes links load
 		Returns:
@@ -112,7 +119,7 @@ class FogNode():
 		return sum([link.get_usage() for link in self.links])
 	
 	def assign_task(self, vehicle: "Vehicle", task: Task) -> TaskStates:	# type: ignore
-		""" Assign a task to the fog node and returns the old state of the task
+		""" Assign a task to the fog node and returns the old state of the task\n
 		Args:
 			vehicle			(Vehicle):		Vehicle to assign the task to
 			task			(Task):			Task to assign
@@ -123,6 +130,7 @@ class FogNode():
 		task.progress(0)
 		self.assigned_tasks.append((vehicle, task))
 		self.used_resources += task.resource
+		self.calculate_usage()
 		return old_state
 	
 	def revert_assign(self, assigned_task: Task, old_state: TaskStates = None, is_last: bool = True) -> None:
@@ -132,6 +140,7 @@ class FogNode():
 			old_state		(TaskStates):	Old state of the task
 		"""
 		self.used_resources -= assigned_task.resource
+		self.calculate_usage()
 		if is_last:
 			self.assigned_tasks.pop()
 		else:
@@ -168,10 +177,12 @@ class FogNode():
 
 			# If check_qos, accept the task if the new QoS is better than the old one
 			if mode.qos:
-				from src.evaluations import evaluate_network
-				old_qos: float = evaluate_network(FogNode.generated_nodes)
+				from src.evaluations import Evaluator
+
+				old_qos: float = Evaluator.calculate_qos(FogNode.generated_nodes)
 				old_state: TaskStates = self.assign_task(vehicle, incomming_task)
-				new_qos: float = evaluate_network(FogNode.generated_nodes)
+				new_qos: float = Evaluator.calculate_qos(FogNode.generated_nodes)
+
 				if new_qos >= old_qos:
 					return True
 				self.revert_assign(incomming_task, old_state)
@@ -184,10 +195,8 @@ class FogNode():
 		# If the task is from a vehicle, try communication with other fog nodes
 		if from_vehicle:
 
-			# Get tasks that can be replaced with cost priority
+			# For each replaceable tasks, try to assign to neighbours and stop if any accept
 			if mode.cost:
-				
-				# For each replaceable tasks, try to assign to neighbours and stop if any accept
 				for vehicle, task in self.get_replaceable_tasks(incomming_task):
 					for link in self.links:
 						if link.other.ask_assign_task(vehicle, task, mode = AssignMode(), from_vehicle = False):
@@ -196,7 +205,7 @@ class FogNode():
 							debug(f"Moved task {task.id} from {self.fog_id} to {link.other.fog_id} because cost {task.cost} is lower than {incomming_task.cost}")
 							return True
 
-			# If we don't have enough resources, ask the neighbours if they can assign the task
+			# Ask the neighbours if they can assign the task
 			if mode.neighbours:
 				for link in self.links:
 					if link.other.ask_assign_task(vehicle, incomming_task, mode = mode, from_vehicle = False):
@@ -219,7 +228,7 @@ class FogNode():
 				self.assigned_tasks.remove(pair)
 
 	@staticmethod
-	def get_node_from_id(fog_id: str) -> "FogNode":
+	def get_node_from_id(fog_id: str) -> FogNode:
 		""" Get a fog node from its ID
 		Args:
 			fog_id	(str):	ID of the fog node
@@ -232,7 +241,7 @@ class FogNode():
 		return matching[0]
 	
 	@staticmethod
-	def color_usage(fogs: set['FogNode']) -> None:
+	def color_usage(fogs: set[FogNode]) -> None:
 		""" Change the color of the fog nodes depending on their resources """
 		LOW_COLOR = (0, 255, 0)
 		HIGH_COLOR = (255, 0, 0)
@@ -247,7 +256,7 @@ class FogNode():
 
 	# Function that add multiple fog nodes at random positions and returns the result
 	@staticmethod
-	def random_nodes(nb_fog_nodes: int, offsets: tuple, center: tuple, random_divider: int, fog_shape: list[tuple], fog_color: tuple) -> set['FogNode']:
+	def random_nodes(nb_fog_nodes: int, offsets: tuple, center: tuple, random_divider: int, fog_shape: list[tuple], fog_color: tuple) -> set[FogNode]:
 		""" Create multiple fog nodes at random positions and returns the result
 		Args:
 			nb_fog_nodes	(int):		Number of fog nodes to add

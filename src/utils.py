@@ -1,6 +1,6 @@
 
 # Imports
-from enum import Enum
+from __future__ import annotations
 import time
 import math
 import random
@@ -12,7 +12,7 @@ class AssignMode():
 		self.qos = qos
 		self.cost = cost
 
-	ALL: "AssignMode" = None
+	ALL: AssignMode = None
 AssignMode.ALL = AssignMode(True, True, True)
 
 
@@ -48,3 +48,4 @@ def random_step(min: int, max: int, step: int = 1) -> int:
 	
 	# Return
 	return random.randint(min, max) * step
+

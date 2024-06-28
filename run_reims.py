@@ -57,7 +57,7 @@ while traci.simulation.getMinExpectedNumber() > 0:
 		debug(f"Time taken for step #{step}: {time_taken:.5f}s")
 
 	# Evaluate the network
-	evaluation = evaluate_network(fog_list)
+	evaluation = Evaluator.calculate_qos(fog_list)
 	evaluations.append(evaluation)
 
 	# Make a plot with all evaluations
