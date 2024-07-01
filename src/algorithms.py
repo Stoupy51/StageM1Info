@@ -67,7 +67,7 @@ def simple_algorithm_step(fogs: set[FogNode]) -> float:
 
 
 # Solution Algortihm
-def solution_algorithm_step(fogs: set[FogNode]) -> float:
+def solution_algorithm_step(fogs: set[FogNode], assign_mode: AssignMode) -> float:
 	""" Solution algorithm step. Here are the steps:
 	- For each vehicle
 	  - If no tasks, generate tasks
@@ -81,7 +81,8 @@ def solution_algorithm_step(fogs: set[FogNode]) -> float:
 	  - For each allocated task, send the result to the vehicle and remove the task
 
 	Args:
-		fogs	(set):	Set of fog nodes
+		fogs		(set):			Set of fog nodes
+		assign_mode	(AssignMode):	Configuration of how the tasks are assigned
 	Returns:
 		float: Time taken to progress the algorithm
 	"""
@@ -111,7 +112,7 @@ def solution_algorithm_step(fogs: set[FogNode]) -> float:
 	# For each not assigned task, ask the nearest fog node to resolve the task
 	pending_vehicles: list[Vehicle] = [vehicle for vehicle in Vehicle.vehicles if vehicle.not_finished_tasks > 0]
 	for vehicle in pending_vehicles:
-		vehicle.assign_tasks(fogs, AssignMode.ALL)
+		vehicle.assign_tasks(fogs, assign_mode)
 	
 	# Change fog color depending on their resources
 	FogNode.color_usage(fogs)
