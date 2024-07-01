@@ -1,4 +1,0 @@
-TODO:
-- Centraliser run_reims.py
-- Run simultanément plusieurs algos différents avec du multiprocessing.
-

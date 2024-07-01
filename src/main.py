@@ -20,7 +20,7 @@ NB_FOG_NODES: int = 10
 RANDOM_DIVIDER: int = 3
 PLOT_INTERVAL: int = 1
 
-def run_simulation(simulation_name: str, assign_mode: AssignMode, sumo_config: str, visual_center: tuple[int,int], seed: int = 0, debug_perf: bool = False, auto_start: bool = True, auto_quit: bool = True):
+def run_simulation(simulation_name: str, assign_mode: AssignMode, sumo_config: str, visual_center: tuple[int,int], seed: int = 0, debug_perf: bool = False, auto_start: bool = True, auto_quit: bool = True) -> list:
 	""" Run a simulation with the given parameters\n
 	It will generates multiple plots such as the QoS over time, the fog nodes resources, etc.\n
 	Args:
@@ -31,6 +31,8 @@ def run_simulation(simulation_name: str, assign_mode: AssignMode, sumo_config: s
 		debug_perf		(bool):			Whether to debug the performance of the simulation (default: False)
 		auto_start		(bool):			Whether to start the simulation automatically (default: True)	(adding '--start')
 		auto_quit		(bool):			Whether to quit the simulation automatically (default: True)	(adding '--quit-on-end')
+	Returns:
+		list: List of evaluations over time
 	"""
 
 	# Start sumo
@@ -40,7 +42,7 @@ def run_simulation(simulation_name: str, assign_mode: AssignMode, sumo_config: s
 		command.append("--start")
 	if auto_quit:
 		command.append("--quit-on-end")
-	traci.start(command)
+	traci.start(command, label = simulation_name)
 
 	# Calculated constants
 	(MIN_X, MIN_Y), (MAX_X, MAX_Y) = traci.simulation.getNetBoundary()
@@ -80,7 +82,7 @@ def run_simulation(simulation_name: str, assign_mode: AssignMode, sumo_config: s
 			time_taken = time.perf_counter()
 			plt.clf()
 			plt.plot(evaluations)
-			plt.title("Quality of Service (QoS) over time")
+			plt.title(f"Quality of Service (QoS) over time - {simulation_name}")
 			plt.xlabel("Simulation Step")
 			plt.ylabel("Quality of Service (QoS)")
 			plt.pause(0.0001)
@@ -93,17 +95,19 @@ def run_simulation(simulation_name: str, assign_mode: AssignMode, sumo_config: s
 
 	# Make folder if it doesn't exist
 	import os
-	if not os.path.exists(simulation_name):
-		os.mkdir(simulation_name)
+	if not os.path.exists("outputs"):
+		os.mkdir("outputs")
+	if not os.path.exists(f"outputs/{simulation_name}"):
+		os.mkdir(f"outputs/{simulation_name}")
 
 	# Save the last plot
-	path: str = f"{simulation_name}/task_states_evaluation.png"
+	path: str = f"outputs/{simulation_name}/qos_evaluations.png"
 	plt.savefig(path)
 	info(f"Plot saved in '{path}'")
 
 	# Save in a JSON file the evaluations
 	import json
-	path: str = f"{simulation_name}/task_states_evaluation.json"
+	path: str = f"outputs/{simulation_name}/qos_evaluations.json"
 	with open(path, "w") as file:
 		file.write(json.dumps(evaluations))
 	info(f"Evaluations saved in '{path}'")
@@ -120,7 +124,7 @@ def run_simulation(simulation_name: str, assign_mode: AssignMode, sumo_config: s
 	content += f"\tMedian: {median}\n"
 	content += f"\tMaximum: {maximum}\n"
 	content += "\n"
-	path: str = f"{simulation_name}/additional.txt"
+	path: str = f"outputs/{simulation_name}/additional.txt"
 	with open(path, "w") as file:
 		file.write(content)
 	info(f"Analysis saved in '{path}'")
@@ -128,5 +132,8 @@ def run_simulation(simulation_name: str, assign_mode: AssignMode, sumo_config: s
 	# Close the simulation
 	traci.close()
 	info("Simulation closed")
+
+	# Return the evaluations
+	return evaluations
 
 

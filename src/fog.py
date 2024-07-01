@@ -284,7 +284,7 @@ class FogNode():
 	@staticmethod
 	def color_usage(fogs: set[FogNode]) -> None:
 		""" Change the color of the fog nodes depending on their resources """
-		LOW_COLOR = (0, 255, 0)
+		LOW_COLOR = (0, 0, 255)
 		HIGH_COLOR = (255, 0, 0)
 		for fog in fogs:
 			

@@ -1,0 +1,6 @@
+Quality of Service:
+	Total: 2063837.0555089044
+	Average: 466.61
+	Median: 431.9696413674902
+	Maximum: 944.938683728627
+
