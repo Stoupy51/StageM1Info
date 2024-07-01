@@ -6,19 +6,11 @@ from src.resources import Resource
 from src.utils import *
 from src.print import *
 from src.evaluations import *
+from config import *
 from matplotlib import pyplot as plt
 import traci
 import random
 import time
-
-# Constants
-FOG_COLOR: tuple = (255, 0, 0, 255)
-FOG_SIZE: int = 50
-FOG_SHAPE: list[tuple] = [(0, 0), (0, FOG_SIZE), (FOG_SIZE, FOG_SIZE), (FOG_SIZE, 0)]
-FOG_LINK_BANDWIDTH_RANGE: tuple[int,int,int] = (100, 1000, 10)
-NB_FOG_NODES: int = 10
-RANDOM_DIVIDER: int = 3
-PLOT_INTERVAL: int = 1
 
 def run_simulation(simulation_name: str, assign_mode: AssignMode, sumo_config: str, visual_center: tuple[int,int], seed: int = 0, debug_perf: bool = False, auto_start: bool = True, auto_quit: bool = True) -> list:
 	""" Run a simulation with the given parameters\n
