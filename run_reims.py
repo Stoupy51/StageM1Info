@@ -25,7 +25,7 @@ PLOT_INTERVAL: int = 1
 DEBUG_PERF: bool = False
 
 # Start sumo
-traci.start(["sumo-gui", "-c", SUMO_CONFIG])
+traci.start(["sumo-gui", "-c", SUMO_CONFIG, "--seed", "1"])
 
 # Calculated constants
 (MIN_X, MIN_Y), (MAX_X, MAX_Y) = traci.simulation.getNetBoundary()
