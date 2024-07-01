@@ -7,10 +7,33 @@ import random
 
 # Assign modes
 class AssignMode():
+	NB_ARGS: int = 3
 	def __init__(self, neighbours: bool = False, qos: bool = False, cost: bool = False):
 		self.neighbours = neighbours
 		self.qos = qos
 		self.cost = cost
+
+		self.name: str = ""
+		if self.neighbours:
+			self.name += "N"
+		if self.qos:
+			self.name += "Q"
+		if self.cost:
+			self.name += "C"
+	
+	@staticmethod
+	def get_all_assign_modes() -> list[AssignMode]:
+		""" Get all the assign modes combinations
+		Returns:
+			list[AssignMode]: List of all the assign modes
+		"""
+		bools = [False, True]
+		return [
+			AssignMode(n, q, c)
+			for n in bools
+			for q in bools
+			for c in bools
+		]
 
 	ALL: AssignMode = None
 AssignMode.ALL = AssignMode(True, True, True)
