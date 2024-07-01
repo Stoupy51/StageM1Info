@@ -20,7 +20,7 @@ NB_FOG_NODES: int = 10
 RANDOM_DIVIDER: int = 3
 PLOT_INTERVAL: int = 1
 
-def run_simulation(simulation_name: str, assign_mode: AssignMode, sumo_config: str, visual_center: tuple[int,int], seed: int = 0, debug_perf: bool = False) -> None:
+def run_simulation(simulation_name: str, assign_mode: AssignMode, sumo_config: str, visual_center: tuple[int,int], seed: int = 0, debug_perf: bool = False, auto_start: bool = True, auto_quit: bool = True):
 	""" Run a simulation with the given parameters\n
 	It will generates multiple plots such as the QoS over time, the fog nodes resources, etc.\n
 	Args:
@@ -29,11 +29,18 @@ def run_simulation(simulation_name: str, assign_mode: AssignMode, sumo_config: s
 		sumo_config		(str):			Sumo configuration file to use
 		seed			(int):			Seed to use for the simulation (default: 0)
 		debug_perf		(bool):			Whether to debug the performance of the simulation (default: False)
+		auto_start		(bool):			Whether to start the simulation automatically (default: True)	(adding '--start')
+		auto_quit		(bool):			Whether to quit the simulation automatically (default: True)	(adding '--quit-on-end')
 	"""
 
 	# Start sumo
 	random.seed(seed)
-	traci.start(["sumo-gui", "-c", sumo_config, "--seed", str(seed)])
+	command: list[str] = ["sumo-gui", "-c", sumo_config, "--seed", str(seed)]
+	if auto_start:
+		command.append("--start")
+	if auto_quit:
+		command.append("--quit-on-end")
+	traci.start(command)
 
 	# Calculated constants
 	(MIN_X, MIN_Y), (MAX_X, MAX_Y) = traci.simulation.getNetBoundary()

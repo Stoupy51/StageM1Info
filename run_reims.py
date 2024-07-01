@@ -9,6 +9,8 @@ SEED: int = 0
 SUMO_CONFIG: str = "Reims/osm.sumocfg"
 VISUAL_CENTER: tuple[int,int] = (1200, 1600)
 DEBUG_PERF: bool = False
+AUTO_START: bool = True		# --start
+AUTO_QUIT: bool = True		# --quit-on-end
 
 # Thread method
 def thread(assign_mode: AssignMode) -> None:
@@ -22,7 +24,9 @@ def thread(assign_mode: AssignMode) -> None:
 		sumo_config = SUMO_CONFIG,
 		visual_center = VISUAL_CENTER,
 		seed = SEED,
-		debug_perf = DEBUG_PERF
+		debug_perf = DEBUG_PERF,
+		auto_start = AUTO_START,
+		auto_quit = AUTO_QUIT
 	)
 
 # Main method
