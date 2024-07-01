@@ -5,7 +5,7 @@ from src.print import *
 from src.resources import Resource
 from src.vehicle import Vehicle
 from src.task import Task, TaskStates
-from src.fog import FogNode
+from src.fog import FogNode, FogNodesLink
 from config import *
 import numpy as np
 import random
@@ -30,6 +30,10 @@ def simple_algorithm_step(fogs: set[FogNode]) -> float:
 		float: Time taken to progress the algorithm
 	"""
 	start_time: float = time.perf_counter()
+
+	# Reset fog links charge
+	if FogNode.reset_links_charges(fogs):
+		print()	# Add a new line for better readability
 
 	# Delete all vehicles that are not in the simulation anymore
 	Vehicle.acknowledge_removed_vehicles()
@@ -82,6 +86,10 @@ def solution_algorithm_step(fogs: set[FogNode]) -> float:
 		float: Time taken to progress the algorithm
 	"""
 	start_time: float = time.perf_counter()
+
+	# Reset fog links charge
+	if FogNode.reset_links_charges(fogs):
+		print()	# Add a new line for better readability
 
 	# Delete all vehicles that are not in the simulation anymore
 	Vehicle.acknowledge_removed_vehicles()

@@ -39,6 +39,10 @@ class Task():
 		self.time_constraint: int = time_constraint
 		self.state: TaskStates = TaskStates.PENDING
 		Task.all_tasks[self.state].append(self)
+
+		# Bandwidth charge needed to transfer the task from a node to another one
+		K_bc: float = 1.0
+		self.bandwidth_charge: int = int(K_bc * self.resolving_time)
 	
 	def __str__(self) -> str:
 		limit_date: str = "None"

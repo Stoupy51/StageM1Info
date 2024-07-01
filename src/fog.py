@@ -29,6 +29,7 @@ class FogNode():
 		self.used_resources = Resource(cpu = 0, ram = 0)
 		self.usage: float = 0.0
 		self.assigned_tasks: list[tuple["Vehicle",Task]] = []	# type: ignore
+		self.links: list[FogNodesLink] = []
 		traci.polygon.add(polygonID = fog_id, shape = self.get_adjusted_shape(), color = color, fill = True)
 		FogNode.generated_nodes.add(self)
 	
@@ -91,7 +92,31 @@ class FogNode():
 			latence: int = int(distance)
 			bandwidth: int = random_step(*bandwidth_range)
 			self.links.append(FogNodesLink(node, latence, bandwidth))
-
+	
+	def reset_links_charge(self) -> bool:
+		""" Reset the charge of all links of the fog node
+		Returns:
+			bool: if any link got a charge before reset
+		"""
+		any_reset: bool = False
+		for link in self.links:
+			if link.charge != 0:
+				debug(link)
+				link.charge = 0
+				any_reset = True
+		return any_reset
+	
+	@staticmethod
+	def reset_links_charges(fogs: set[FogNode]) -> bool:
+		""" Reset the charge of all links of all fog nodes
+		Returns:
+			bool: if any link got a charge before reset
+		"""
+		any_reset: bool = False
+		for fog in fogs:
+			if fog.reset_links_charge():
+				any_reset = True
+		return any_reset
 	
 	def get_links(self) -> list[FogNodesLink]:
 		""" Get the links of the fog node
@@ -162,7 +187,7 @@ class FogNode():
 			and (self.used_resources - task.resource + incomming_task.resource) <= self.resources	# We have enough resources to accept the incomming task if we remove the task
 		]
 		return sorted(replaceable_tasks, key = lambda pair: pair[1].cost)
-	
+
 	def ask_assign_task(self, vehicle: "Vehicle", incomming_task: Task, mode: AssignMode, from_vehicle: bool = True) -> bool:	# type: ignore
 		""" Assign a task from a vehicle to the fog node
 		Args:
@@ -195,23 +220,35 @@ class FogNode():
 		# If the task is from a vehicle, try communication with other fog nodes
 		if from_vehicle:
 
-			# For each replaceable tasks, try to assign to neighbours and stop if any accept
+			# For each replaceable tasks, try to assign to each neighbour and stop if any accept
 			if mode.cost:
-				for vehicle, task in self.get_replaceable_tasks(incomming_task):
+				for vehicle, task in self.get_replaceable_tasks(incomming_task): 
 					for link in self.links:
-						if link.other.ask_assign_task(vehicle, task, mode = AssignMode(), from_vehicle = False):
+
+						# If the link can handle the charge and the fog node accept the task,
+						if link.can_handle_charge(task.bandwidth_charge) and \
+						link.other.ask_assign_task(vehicle, task, mode = AssignMode(), from_vehicle = False):
+							debug(f"Moved task {task.id} from {self.fog_id} to {link.other.fog_id} because cost {task.cost} is lower than {incomming_task.cost}. Charge: {task.bandwidth_charge}")
+
+							# Revert assign the task (as the link sended it) to allow the assignment of the incomming one
 							self.revert_assign(task, is_last = False)
 							self.assign_task(vehicle, incomming_task)
-							debug(f"Moved task {task.id} from {self.fog_id} to {link.other.fog_id} because cost {task.cost} is lower than {incomming_task.cost}")
+
+							# Add up the new charge to the link and return True
+							link.charge += task.bandwidth_charge
 							return True
 
 			# Ask the neighbours if they can assign the task
 			if mode.neighbours:
 				for link in self.links:
-					if link.other.ask_assign_task(vehicle, incomming_task, mode = mode, from_vehicle = False):
+
+					# If the link can handle the charge and the fog node accept the task,
+					if link.can_handle_charge(incomming_task.bandwidth_charge) and \
+					link.other.ask_assign_task(vehicle, incomming_task, mode = mode, from_vehicle = False):
+						link.charge += incomming_task.bandwidth_charge
 						return True
 		
-		# No neighbour can assign the task
+		# Nobody can assign the task
 		return False
 
 
@@ -303,7 +340,16 @@ class FogNodesLink():
 		self.charge: int = 0
 	
 	def __str__(self) -> str:
-		return f"Link to {self.other.fog_id} with: Latence = {self.latence}, Bandwidth = {self.bandwidth}MB/s"
+		return f"Link to {self.other.fog_id} with: Latence = {self.latence}, Bandwidth = {self.bandwidth}MB/s, Current charge = {self.charge}MB"
+	
+	def can_handle_charge(self, incomming: int) -> bool:
+		""" Check if the link can handle the charge
+		Args:
+			incomming	(int):	Charge to handle
+		Returns:
+			bool: True if the link can handle the charge, False otherwise
+		"""
+		return (self.charge + incomming) <= self.bandwidth
 
 	def get_charge(self) -> int:
 		""" Get the charge of the link
