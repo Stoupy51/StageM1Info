@@ -218,14 +218,18 @@ class FogNode():
 	def progress_tasks(self) -> None:
 		""" Progress the tasks of the fog node, sending the results to the vehicles when completed and removing the tasks from the list """
 		from src.vehicle import Vehicle
-		for pair in list(self.assigned_tasks):
-			vehicle: Vehicle = pair[0]
+		new_list: list[tuple["Vehicle", Task]] = []
+		for pair in self.assigned_tasks:
 			task: Task = pair[1]
 			task.progress(1)
 			if task.state == TaskStates.COMPLETED:
+				vehicle: Vehicle = pair[0]
 				vehicle.receive_task_result(task)
 				self.used_resources -= task.resource
-				self.assigned_tasks.remove(pair)
+				self.calculate_usage()
+			else:
+				new_list.append(pair)
+		self.assigned_tasks = new_list
 
 	@staticmethod
 	def get_node_from_id(fog_id: str) -> FogNode:

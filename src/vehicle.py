@@ -64,7 +64,8 @@ class Vehicle():
 			task	(Task):	Task that has been resolved
 		"""
 		self.not_finished_tasks -= 1
-		task.change_state(TaskStates.COMPLETED)
+		if task.state != TaskStates.COMPLETED:
+			task.change_state(TaskStates.COMPLETED)
 	
 	def assign_tasks(self, fogs: set[FogNode], mode: AssignMode = AssignMode.ALL) -> None:
 		""" Assign pensing tasks to the nearest fog node

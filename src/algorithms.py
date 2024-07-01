@@ -84,12 +84,17 @@ def solution_algorithm_step(fogs: set[FogNode]) -> float:
 	start_time: float = time.perf_counter()
 
 	# Delete all vehicles that are not in the simulation anymore
+	s_time = time.perf_counter()
 	Vehicle.acknowledge_removed_vehicles()
+	print(f"acknowledge removed vehicles: {time.perf_counter() - s_time:.4f}s")
 
 	# Create all vehicles that are not created yet
+	s_time = time.perf_counter()
 	Vehicle.acknowledge_new_vehicles()
+	print(f"acknowledge new vehicles: {time.perf_counter() - s_time:.4f}s")
 	
 	# Generate tasks for each vehicle that has no tasks
+	s_time = time.perf_counter()
 	for vehicle in Vehicle.vehicles:
 		if vehicle.not_finished_tasks == 0:
 			Vehicle.generate_tasks(
@@ -99,18 +104,25 @@ def solution_algorithm_step(fogs: set[FogNode]) -> float:
 				random_resolution_times = (1, 5, 1),
 				random_costs = Task.COST_RANGE
 			)
+	print(f"generate tasks: {time.perf_counter() - s_time:.4f}s")
 	
 	# For each not assigned task, ask the nearest fog node to resolve the task
+	s_time = time.perf_counter()
 	pending_vehicles: list[Vehicle] = [vehicle for vehicle in Vehicle.vehicles if vehicle.not_finished_tasks > 0]
 	for vehicle in pending_vehicles:
 		vehicle.assign_tasks(fogs, AssignMode.ALL)
+	print(f"assign tasks: {time.perf_counter() - s_time:.4f}s")
 	
 	# Change fog color depending on their resources
+	s_time = time.perf_counter()
 	FogNode.color_usage(fogs)
+	print(f"color usage: {time.perf_counter() - s_time:.4f}s")
 	
 	# For each fog node, progress the tasks
+	s_time = time.perf_counter()
 	for fog_node in fogs:
 		fog_node.progress_tasks()
+	print(f"progress tasks: {time.perf_counter() - s_time:.4f}s")
 	
 	# Return the time taken to progress the algorithm
 	return time.perf_counter() - start_time
