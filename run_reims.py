@@ -15,7 +15,7 @@ AUTO_QUIT: bool = True		# --quit-on-end
 # Thread method
 def thread(assign_mode: AssignMode) -> list:
 	return run_simulation(
-		simulation_name = f"Reims_{assign_mode.name}",	assign_mode = assign_mode,
+		simulation_name = f"outputs/Reims_{assign_mode.name}",	assign_mode = assign_mode,
 		sumo_config = SUMO_CONFIG,						visual_center = VISUAL_CENTER,
 		seed = SEED,									debug_perf = DEBUG_PERF,
 		auto_start = AUTO_START,						auto_quit = AUTO_QUIT

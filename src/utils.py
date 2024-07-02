@@ -20,6 +20,9 @@ class AssignMode():
 			self.name += "Q"
 		if self.cost:
 			self.name += "C"
+		
+		if self.name == "":
+			self.name = "None"
 	
 	@staticmethod
 	def get_all_assign_modes() -> list[AssignMode]:

@@ -34,7 +34,8 @@ def run_simulation(simulation_name: str, assign_mode: AssignMode, sumo_config: s
 		command.append("--start")
 	if auto_quit:
 		command.append("--quit-on-end")
-	traci.start(command, label = simulation_name)
+	simplified_name: str = simulation_name.split("/")[-1]
+	traci.start(command, label = simplified_name)
 
 	# Calculated constants
 	(MIN_X, MIN_Y), (MAX_X, MAX_Y) = traci.simulation.getNetBoundary()
@@ -74,7 +75,7 @@ def run_simulation(simulation_name: str, assign_mode: AssignMode, sumo_config: s
 			time_taken = time.perf_counter()
 			plt.clf()
 			plt.plot(evaluations)
-			plt.title(f"Quality of Service (QoS) over time - {simulation_name}")
+			plt.title(f"Quality of Service (QoS) over time - {simplified_name}")
 			plt.xlabel("Simulation Step")
 			plt.ylabel("Quality of Service (QoS)")
 			plt.pause(0.0001)
@@ -85,21 +86,18 @@ def run_simulation(simulation_name: str, assign_mode: AssignMode, sumo_config: s
 		# Increment the step
 		step += 1
 
-	# Make folder if it doesn't exist
+	# Make folder(s) if it doesn't exist
 	import os
-	if not os.path.exists("outputs"):
-		os.mkdir("outputs")
-	if not os.path.exists(f"outputs/{simulation_name}"):
-		os.mkdir(f"outputs/{simulation_name}")
+	os.makedirs(simulation_name, exist_ok = True)
 
 	# Save the last plot
-	path: str = f"outputs/{simulation_name}/qos_evaluations.png"
+	path: str = f"{simulation_name}/qos_evaluations.png"
 	plt.savefig(path)
 	info(f"Plot saved in '{path}'")
 
 	# Save in a JSON file the evaluations
 	import json
-	path: str = f"outputs/{simulation_name}/qos_evaluations.json"
+	path: str = f"{simulation_name}/qos_evaluations.json"
 	with open(path, "w") as file:
 		file.write(json.dumps(evaluations))
 	info(f"Evaluations saved in '{path}'")
@@ -116,7 +114,7 @@ def run_simulation(simulation_name: str, assign_mode: AssignMode, sumo_config: s
 	content += f"\tMedian: {median}\n"
 	content += f"\tMaximum: {maximum}\n"
 	content += "\n"
-	path: str = f"outputs/{simulation_name}/additional.txt"
+	path: str = f"{simulation_name}/additional.txt"
 	with open(path, "w") as file:
 		file.write(content)
 	info(f"Analysis saved in '{path}'")
