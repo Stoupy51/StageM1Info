@@ -1,11 +1,14 @@
 
 # Imports
 from __future__ import annotations
+from matplotlib import pyplot as plt
 import time
 import math
 import random
 import json
 import io
+import os
+
 
 # Assign modes
 class AssignMode():
@@ -77,6 +80,7 @@ def random_step(min: int, max: int, step: int = 1) -> int:
 	# Return
 	return random.randint(min, max) * step
 
+
 # JSON dump with indentation for levels
 def super_json_dump(data: dict|list, file: io.TextIOWrapper = None, max_level: int = 2) -> str:
 	""" Dump the given data to a JSON file with indentation for only 2 levels by default
@@ -115,4 +119,43 @@ def super_json_dump(data: dict|list, file: io.TextIOWrapper = None, max_level: i
 	if file:
 		file.write(content)
 	return content
+
+
+# Utility function that processes the return value of a simulation
+def process_simulation_evaluations(evaluations_per_mode: list[dict]) -> None:
+	""" Process the return value of a simulation and generate the outputs (images and data)\n
+	Args:
+		evaluations_per_mode (list[dict]): The evaluations of each assign mode
+	"""
+	# Extract all evaluations labels
+	evaluations_labels: list[str] = [key for key in evaluations_per_mode[0].keys() if key not in ["folder", "name"]]
+
+	# For each assign mode, generate its content
+	for data in evaluations_per_mode:
+		os.makedirs(data["folder"], exist_ok = True)
+		folder: str = data["folder"]
+		name: str = data["name"]
+		for label in evaluations_labels:
+			plt.clf()
+			plt.plot(data[label])
+			plt.title(f"{label} over time - {name}")
+			plt.xlabel("Simulation Step")
+			plt.ylabel(label)
+			plt.savefig(f"{folder}/{label}.png")
+		
+		# Save data
+		with open(f"{folder}/data.json", "w", encoding = "utf-8") as file:
+			super_json_dump(data, file, max_level = 2)
+
+	# For each label, generate graphs comparing each assign mode
+	for label in evaluations_labels:
+		data: list[list[float]] = [assign_mode[label] for assign_mode in evaluations_per_mode]
+		plt.clf()
+		for i, mode in enumerate(evaluations_per_mode):
+			plt.plot(data[i], label = mode["name"])
+		plt.title(f"{label} over time")
+		plt.legend()
+		plt.xlabel("Simulation Step")
+		plt.ylabel(label)
+		plt.savefig(f"outputs/{label}_comparison.png")
 
