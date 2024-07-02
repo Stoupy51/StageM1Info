@@ -21,7 +21,8 @@ def run_simulation(
 		debug_perf: bool = False,
 		auto_start: bool = True,
 		auto_quit: bool = True,
-		open_gui: bool = True
+		open_gui: bool = True,
+		fog_resources: tuple = Resource.HIGH_RANDOM_RESOURCE_ARGS
 	) -> dict:
 	""" Run a simulation with the given parameters\n
 	It will generates multiple plots such as the QoS over time, the fog nodes resources, etc.\n
@@ -34,6 +35,7 @@ def run_simulation(
 		auto_start		(bool):			Whether to start the simulation automatically (default: True)	(adding '--start')
 		auto_quit		(bool):			Whether to quit the simulation automatically (default: True)	(adding '--quit-on-end')
 		open_gui		(bool):			Whether to run traci command "sumo-gui" or "sumo" (default: True)
+		fog_resources	(tuple):		Resources to use for the fog nodes (default: Resource.HIGH_RANDOM_RESOURCE_ARGS)
 	Returns:
 		dict: Dictionnary of evaluations over time
 	"""
@@ -58,9 +60,10 @@ def run_simulation(
 	fog_list: set[FogNode] = FogNode.random_nodes(NB_FOG_NODES, (OFFSET_X, OFFSET_Y), visual_center, RANDOM_DIVIDER, FOG_SHAPE, FOG_COLOR)
 
 	# Setup random resources for fog nodes
+	fog_link_bandwidth_range: tuple[int,int,int] = tuple([x // 5 for x in fog_resources[0]])	# Bandwidth = (cpu resource / 5) to scale with it.
 	for fog_node in fog_list:
-		fog_node.set_resources(Resource.random())
-		fog_node.set_neighbours(nodes = fog_list, bandwidth_range = FOG_LINK_BANDWIDTH_RANGE)
+		fog_node.set_resources(Resource.random(*fog_resources))
+		fog_node.set_neighbours(nodes = fog_list, bandwidth_range = fog_link_bandwidth_range)
 		info(fog_node)
 	
 	# Evaluations

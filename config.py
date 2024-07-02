@@ -16,7 +16,6 @@ K3: int = 1		# Coefficient for the links load in the QoS
 FOG_COLOR: tuple = (255, 0, 0, 255)
 FOG_SIZE: int = 50
 FOG_SHAPE: list[tuple] = [(0, 0), (0, FOG_SIZE), (FOG_SIZE, FOG_SIZE), (FOG_SIZE, 0)]
-FOG_LINK_BANDWIDTH_RANGE: tuple[int,int,int] = (100, 1000, 10)
 NB_FOG_NODES: int = 10
 RANDOM_DIVIDER: int = 3
 PLOT_INTERVAL: int = 1

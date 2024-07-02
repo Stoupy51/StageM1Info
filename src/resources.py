@@ -47,7 +47,9 @@ class Resource():
 	def max(self) -> int:
 		return max(self.cpu, self.ram, self.storage)
 	
+	EXTREME_RANDOM_RESOURCE_ARGS: tuple = (5000, 20000, 2500), (8192, 65536, 8192), (1024, 8192, 256)
 	HIGH_RANDOM_RESOURCE_ARGS: tuple = (500, 2000, 250), (1024, 16384, 1024), (128, 512, 32)
+	MEDIUM_RANDOM_RESOURCE_ARGS: tuple = (64, 256, 32), (128, 1024, 128), (8, 64, 8)
 	LOW_RANDOM_RESOURCE_ARGS: tuple = (2, 8, 1), (8, 64, 8), (1, 4, 1)
 	@staticmethod
 	def random(cpu: tuple = HIGH_RANDOM_RESOURCE_ARGS[0], ram: tuple = HIGH_RANDOM_RESOURCE_ARGS[1], storage: tuple = HIGH_RANDOM_RESOURCE_ARGS[2]) -> "Resource":
