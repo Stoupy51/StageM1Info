@@ -35,8 +35,8 @@ def thread(args: tuple[AssignMode, str, tuple[int,int,int]]) -> dict:
 # Main method
 if __name__ == "__main__":
 	fog_resources_types: list[tuple[str, tuple[int,int,int]]] = [
-		("medium",	Resource.MEDIUM_RANDOM_RESOURCE_ARGS),
 		("high",	Resource.HIGH_RANDOM_RESOURCE_ARGS),
+		("medium",	Resource.MEDIUM_RANDOM_RESOURCE_ARGS),
 		("extreme",	Resource.EXTREME_RANDOM_RESOURCE_ARGS),
 	]
 
@@ -49,7 +49,9 @@ if __name__ == "__main__":
 			(AssignMode(neighbours = True, cost = True),	folder, fog_resources),
 			(AssignMode.ALL,								folder, fog_resources),
 		]
-	with Pool(processes = len(assign_modes)) as pool:
+	NB_THREADS: int = len(assign_modes)
+	NB_THREADS: int = 1
+	with Pool(processes = NB_THREADS) as pool:
 		evaluations_per_mode: list[dict] = pool.map(thread, assign_modes)
 	
 	nb_types: int = len(fog_resources_types)
