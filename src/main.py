@@ -22,7 +22,7 @@ def run_simulation(
 		auto_start: bool = True,
 		auto_quit: bool = True,
 		open_gui: bool = True,
-		fog_resources: tuple = Resource.HIGH_RANDOM_RESOURCE_ARGS
+		fog_resources: tuple[int,int,int] = Resource.HIGH_RANDOM_RESOURCE_ARGS
 	) -> dict:
 	""" Run a simulation with the given parameters\n
 	It will generates multiple plots such as the QoS over time, the fog nodes resources, etc.\n
@@ -60,7 +60,7 @@ def run_simulation(
 	fog_list: set[FogNode] = FogNode.random_nodes(NB_FOG_NODES, (OFFSET_X, OFFSET_Y), visual_center, RANDOM_DIVIDER, FOG_SHAPE, FOG_COLOR)
 
 	# Setup random resources for fog nodes
-	fog_link_bandwidth_range: tuple[int,int,int] = tuple([x // 5 for x in fog_resources[0]])	# Bandwidth = (cpu resource / 5) to scale with it.
+	fog_link_bandwidth_range: tuple[int,int,int] = tuple([x // 4 for x in fog_resources[0]])	# Bandwidth = (cpu resource // 4) to scale with it.
 	for fog_node in fog_list:
 		fog_node.set_resources(Resource.random(*fog_resources))
 		fog_node.set_neighbours(nodes = fog_list, bandwidth_range = fog_link_bandwidth_range)
@@ -93,7 +93,7 @@ def run_simulation(
 		links_load_history.append(links_load)
 
 		# Make a plot with all evaluations
-		if step % PLOT_INTERVAL == 0:
+		if step % PLOT_INTERVAL == 0 and open_gui:
 			time_taken = time.perf_counter()
 			plt.clf()
 			plt.plot(qos_history)

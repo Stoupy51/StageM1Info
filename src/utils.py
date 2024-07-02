@@ -2,6 +2,7 @@
 # Imports
 from __future__ import annotations
 from matplotlib import pyplot as plt
+from src.print import *
 import time
 import math
 import random
@@ -69,7 +70,7 @@ def random_step(min: int, max: int, step: int = 1) -> int:
 	if step <= 0:
 		raise ValueError("Step value must be positive and different from zero")
 	if min % step != 0 or max % step != 0:
-		raise ValueError("Min and Max values must be multiples of the step value")
+		warning(f"Min and Max values must be multiples of the step value, got ({min}, {max}, {step})")
 
 	# Divide borders by the step and check if the step is too big
 	min //= step
@@ -131,6 +132,7 @@ def process_simulation_evaluations(evaluations_per_mode: list[dict]) -> None:
 	evaluations_labels: list[str] = [key for key in evaluations_per_mode[0].keys() if key not in ["folder", "name"]]
 
 	# For each assign mode, generate its content
+	root_folder: str = '/'.join(evaluations_per_mode[0]["folder"].split('/')[:-1])
 	for data in evaluations_per_mode:
 		os.makedirs(data["folder"], exist_ok = True)
 		folder: str = data["folder"]
@@ -145,7 +147,11 @@ def process_simulation_evaluations(evaluations_per_mode: list[dict]) -> None:
 		
 		# Save data
 		with open(f"{folder}/data.json", "w", encoding = "utf-8") as file:
-			super_json_dump(data, file, max_level = 2)
+			super_json_dump(data, file, max_level = 1)
+
+	# Save data
+	with open(f"{root_folder}/all_data.json", "w", encoding = "utf-8") as file:
+		super_json_dump(evaluations_per_mode, file, max_level = 2)
 
 	# For each label, generate graphs comparing each assign mode
 	for label in evaluations_labels:
@@ -157,5 +163,5 @@ def process_simulation_evaluations(evaluations_per_mode: list[dict]) -> None:
 		plt.legend()
 		plt.xlabel("Simulation Step")
 		plt.ylabel(label)
-		plt.savefig(f"outputs/{label}_comparison.png")
+		plt.savefig(f"{root_folder}/{label}_comparison.png")
 

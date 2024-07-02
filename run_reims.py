@@ -12,13 +12,13 @@ VISUAL_CENTER: tuple[int,int] = (1200, 1600)
 DEBUG_PERF: bool = False
 AUTO_START: bool = True		# --start
 AUTO_QUIT: bool = True		# --quit-on-end
-OPEN_GUI: bool = True		# "sumo-gui" when True, "sumo" when False
+OPEN_GUI: bool = False		# "sumo-gui" when True, "sumo" when False
 
 # Thread method
-def thread(args: tuple[AssignMode, str, Resource]) -> dict:
+def thread(args: tuple[AssignMode, str, tuple[int,int,int]]) -> dict:
 	assign_mode: AssignMode = args[0]
 	folder: str = args[1]
-	fog_resources: Resource = args[2]
+	fog_resources: tuple[int,int,int] = args[2]
 	return run_simulation(
 		simulation_name = f"outputs/{folder}/Reims_{assign_mode.name}",
 		assign_mode = assign_mode,
@@ -34,20 +34,28 @@ def thread(args: tuple[AssignMode, str, Resource]) -> dict:
 
 # Main method
 if __name__ == "__main__":
-	fog_resources_types: list[tuple[str, Resource]] = [
-		("extreme",	Resource.EXTREME_RANDOM_RESOURCE_ARGS),
+	fog_resources_types: list[tuple[str, tuple[int,int,int]]] = [
+		("medium",	Resource.MEDIUM_RANDOM_RESOURCE_ARGS),
 		("high",	Resource.HIGH_RANDOM_RESOURCE_ARGS),
-		("medium",	Resource.MEDIUM_RANDOM_RESOURCE_ARGS)
+		("extreme",	Resource.EXTREME_RANDOM_RESOURCE_ARGS),
 	]
 
+	nb_modes_per_type: int = 4
+	assign_modes: list[tuple[AssignMode, str, tuple[int,int,int]]] = []
 	for folder, fog_resources in fog_resources_types:
-		assign_modes: list[tuple[AssignMode, str, Resource]] = [
+		assign_modes += [
 			(AssignMode(),									folder, fog_resources),
 			(AssignMode(neighbours = True),					folder, fog_resources),
 			(AssignMode(neighbours = True, cost = True),	folder, fog_resources),
 			(AssignMode.ALL,								folder, fog_resources),
 		]
-		with Pool(processes = len(assign_modes)) as pool:
-			evaluations_per_mode: list[dict] = pool.map(thread, assign_modes)
-		process_simulation_evaluations(evaluations_per_mode)
+	with Pool(processes = len(assign_modes)) as pool:
+		evaluations_per_mode: list[dict] = pool.map(thread, assign_modes)
+	
+	nb_types: int = len(fog_resources_types)
+	for i in range(nb_types):
+		start_index: int = i * nb_modes_per_type
+		end_index: int = (i + 1) * nb_modes_per_type
+		type_results: list[dict] = evaluations_per_mode[start_index:end_index]
+		process_simulation_evaluations(type_results)
 
