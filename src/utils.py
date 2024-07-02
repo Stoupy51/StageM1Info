@@ -134,9 +134,9 @@ def process_simulation_evaluations(evaluations_per_mode: list[dict]) -> None:
 	# For each assign mode, generate its content
 	root_folder: str = '/'.join(evaluations_per_mode[0]["folder"].split('/')[:-1])
 	for data in evaluations_per_mode:
-		os.makedirs(data["folder"], exist_ok = True)
 		folder: str = data["folder"]
 		name: str = data["name"]
+		os.makedirs(folder, exist_ok = True)
 		for label in evaluations_labels:
 			plt.clf()
 			plt.plot(data[label])

@@ -4,6 +4,7 @@ from src.resources import Resource
 from src.task import Task, TaskStates
 from src.fog import FogNode
 from src.utils import AssignMode, random_step
+from src.print import *
 import traci
 import random
 import math

@@ -44,13 +44,13 @@ if __name__ == "__main__":
 	assign_modes: list[tuple[AssignMode, str, tuple[int,int,int]]] = []
 	for folder, fog_resources in fog_resources_types:
 		assign_modes += [
-			(AssignMode(),									folder, fog_resources),
-			(AssignMode(neighbours = True),					folder, fog_resources),
-			(AssignMode(neighbours = True, cost = True),	folder, fog_resources),
 			(AssignMode.ALL,								folder, fog_resources),
+			(AssignMode(neighbours = True, cost = True),	folder, fog_resources),
+			(AssignMode(neighbours = True),					folder, fog_resources),
+			(AssignMode(),									folder, fog_resources),
 		]
 	NB_THREADS: int = len(assign_modes)
-	NB_THREADS: int = 1
+	#NB_THREADS: int = 1
 	with Pool(processes = NB_THREADS) as pool:
 		evaluations_per_mode: list[dict] = pool.map(thread, assign_modes)
 	
