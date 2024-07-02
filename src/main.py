@@ -12,7 +12,17 @@ import traci
 import random
 import time
 
-def run_simulation(simulation_name: str, assign_mode: AssignMode, sumo_config: str, visual_center: tuple[int,int], seed: int = 0, debug_perf: bool = False, auto_start: bool = True, auto_quit: bool = True) -> list:
+def run_simulation(
+		simulation_name: str,
+		assign_mode: AssignMode,
+		sumo_config: str,
+		visual_center: tuple[int,int],
+		seed: int = 0,
+		debug_perf: bool = False,
+		auto_start: bool = True,
+		auto_quit: bool = True,
+		open_gui: bool = True
+	) -> list:
 	""" Run a simulation with the given parameters\n
 	It will generates multiple plots such as the QoS over time, the fog nodes resources, etc.\n
 	Args:
@@ -23,13 +33,15 @@ def run_simulation(simulation_name: str, assign_mode: AssignMode, sumo_config: s
 		debug_perf		(bool):			Whether to debug the performance of the simulation (default: False)
 		auto_start		(bool):			Whether to start the simulation automatically (default: True)	(adding '--start')
 		auto_quit		(bool):			Whether to quit the simulation automatically (default: True)	(adding '--quit-on-end')
+		open_gui		(bool):			Whether to run traci command "sumo-gui" or "sumo" (default: True)
 	Returns:
 		list: List of evaluations over time
 	"""
 
 	# Start sumo
 	random.seed(seed)
-	command: list[str] = ["sumo-gui", "-c", sumo_config, "--seed", str(seed)]
+	executable: str = "sumo-gui" if open_gui else "sumo"
+	command: list[str] = [executable, "-c", sumo_config, "--seed", str(seed)]
 	if auto_start:
 		command.append("--start")
 	if auto_quit:
