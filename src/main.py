@@ -22,7 +22,7 @@ def run_simulation(
 		auto_start: bool = True,
 		auto_quit: bool = True,
 		open_gui: bool = True
-	) -> list:
+	) -> dict:
 	""" Run a simulation with the given parameters\n
 	It will generates multiple plots such as the QoS over time, the fog nodes resources, etc.\n
 	Args:
@@ -35,7 +35,7 @@ def run_simulation(
 		auto_quit		(bool):			Whether to quit the simulation automatically (default: True)	(adding '--quit-on-end')
 		open_gui		(bool):			Whether to run traci command "sumo-gui" or "sumo" (default: True)
 	Returns:
-		list: List of evaluations over time
+		dict: Dictionnary of evaluations over time
 	"""
 
 	# Start sumo
@@ -64,7 +64,10 @@ def run_simulation(
 		info(fog_node)
 	
 	# Evaluations
-	evaluations: list[float] = []
+	qos_history: list[float] = []
+	allocated_tasks_history: list[int] = []
+	nodes_usage_history: list[float] = []
+	links_load_history: list[float] = []
 
 	# While there are vehicles in the simulation
 	step: int = 0
@@ -79,14 +82,18 @@ def run_simulation(
 			debug(f"Time taken for step #{step}: {time_taken:.5f}s")
 
 		# Evaluate the network
-		evaluation = Evaluator.calculate_qos(fog_list)
-		evaluations.append(evaluation)
+		qos = Evaluator.calculate_qos(fog_list)
+		allocated_tasks, nodes_usage, links_load = Evaluator.get_splitted_qos(fog_list)
+		qos_history.append(qos)
+		allocated_tasks_history.append(allocated_tasks)
+		nodes_usage_history.append(nodes_usage)
+		links_load_history.append(links_load)
 
 		# Make a plot with all evaluations
 		if step % PLOT_INTERVAL == 0:
 			time_taken = time.perf_counter()
 			plt.clf()
-			plt.plot(evaluations)
+			plt.plot(qos_history)
 			plt.title(f"Quality of Service (QoS) over time - {simplified_name}")
 			plt.xlabel("Simulation Step")
 			plt.ylabel("Quality of Service (QoS)")
@@ -98,44 +105,26 @@ def run_simulation(
 		# Increment the step
 		step += 1
 
-	# Make folder(s) if it doesn't exist
-	import os
-	os.makedirs(simulation_name, exist_ok = True)
-
-	# Save the last plot
-	path: str = f"{simulation_name}/qos_evaluations.png"
-	plt.savefig(path)
-	info(f"Plot saved in '{path}'")
-
-	# Save in a JSON file the evaluations
-	import json
-	path: str = f"{simulation_name}/qos_evaluations.json"
-	with open(path, "w") as file:
-		file.write(json.dumps(evaluations))
-	info(f"Evaluations saved in '{path}'")
-
-	# Additional values in "additional.txt"
-	content = ""
-	total: int = sum([e for e in evaluations])
-	average: float = total / len(evaluations)
-	median: float = sorted([e for e in evaluations])[len(evaluations) // 2]
-	maximum: int = max([e for e in evaluations])
-	content += f"Quality of Service:\n"
-	content += f"\tTotal: {total}\n"
-	content += f"\tAverage: {average:.2f}\n"
-	content += f"\tMedian: {median}\n"
-	content += f"\tMaximum: {maximum}\n"
-	content += "\n"
-	path: str = f"{simulation_name}/additional.txt"
-	with open(path, "w") as file:
-		file.write(content)
-	info(f"Analysis saved in '{path}'")
-
 	# Close the simulation
 	traci.close()
 	info("Simulation closed")
 
-	# Return the evaluations
-	return evaluations
+	# Prepeare the return dictionnary
+	r_dict = {
+		"folder": simulation_name,
+		"name": simplified_name,
+		"QoS Evaluations": qos_history,
+		"Allocated Tasks": allocated_tasks_history,
+		"Nodes Usage": nodes_usage_history,
+		"Links Load": links_load_history,
+	}
 
+	# Add cumulative arrays
+	r_dict["Cumulative QoS"] = [sum(qos_history[:i]) for i in range(len(qos_history))]
+	r_dict["Cumulative Allocated Tasks"] = [sum(allocated_tasks_history[:i]) for i in range(len(allocated_tasks_history))]
+	r_dict["Cumulative Nodes Usage"] = [sum(nodes_usage_history[:i]) for i in range(len(nodes_usage_history))]
+	r_dict["Cumulative Links Load"] = [sum(links_load_history[:i]) for i in range(len(links_load_history))]
+
+	# Return the dict
+	return r_dict
 

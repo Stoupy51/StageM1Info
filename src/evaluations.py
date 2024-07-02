@@ -27,3 +27,16 @@ class Evaluator():
 		# Calculate the QoS and return it
 		return (K1 * allocated_tasks) - (K2 * nodes_usage) - (K3 * links_load)
 
+	@staticmethod
+	def get_splitted_qos(fogs: set[FogNode]) -> tuple[float]:
+		""" Calculate the qos and returns each part of the equation without coefficients\n
+		Args:
+			fogs	(set[FogNode]):	Set of fog nodes
+		Returns:
+			tuple[float]: Allocated tasks, nodes usage, links load
+		"""
+		allocated_tasks: int = len(Task.all_tasks[TaskStates.IN_PROGRESS])
+		nodes_usage: float = np.var([fog.get_usage() for fog in fogs])
+		links_load: float = np.var([fog.get_links_load() for fog in fogs])
+		return allocated_tasks, nodes_usage, links_load
+
