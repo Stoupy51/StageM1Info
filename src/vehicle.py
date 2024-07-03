@@ -33,7 +33,7 @@ class Vehicle():
 		"""
 		return traci.vehicle.getPosition(self.vehicle_id)
 	
-	def generate_tasks(self, nb_tasks: tuple[int,int] = (1,3), random_resource_args: tuple = Resource.LOW_RANDOM_RESOURCE_ARGS, random_resolution_times: tuple = (1, 5, 1), random_costs: tuple[int,int,int] = Task.COST_RANGE) -> None:
+	def generate_tasks(self, nb_tasks: tuple[int,int] = (10,30), random_resource_args: tuple = Resource.LOW_RANDOM_RESOURCE_ARGS, random_resolution_times: tuple = (1, 5, 1), random_costs: tuple[int,int,int] = Task.COST_RANGE) -> None:
 		""" Generate tasks for the vehicle
 		Args:
 			nb_tasks				(tuple):	Min and Max number of tasks to generate
@@ -89,6 +89,11 @@ class Vehicle():
 		color: tuple = (0, 255, 0) if nb_tasks == 0 else (0, 0, 255)
 		traci.vehicle.setColor(self.vehicle_id, color)
 
+	def destroy(self) -> None:
+		""" Destroy the vehicle by failing all remaining tasks """
+		for task in self.tasks:
+			if task.state == TaskStates.PENDING:
+				task.change_state(TaskStates.FAILED)
 
 	@staticmethod
 	def get_vehicle_from_id(vehicle_id: str) -> "Vehicle":
@@ -107,7 +112,14 @@ class Vehicle():
 	def acknowledge_removed_vehicles() -> None:
 		""" Acknowledge removed vehicles in the simulation """
 		id_list: set[str] = set(traci.vehicle.getIDList())
-		Vehicle.vehicles = set([vehicle for vehicle in Vehicle.vehicles if vehicle.vehicle_id in id_list])
+		new_set: set[str] = set()
+		for vehicle in Vehicle.vehicles:
+			if vehicle.vehicle_id in id_list:
+				new_set.add(vehicle)
+			else:
+				vehicle.destroy()
+		Vehicle.vehicles = new_set
+
 	
 	@staticmethod
 	def acknowledge_new_vehicles() -> None:

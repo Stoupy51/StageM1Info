@@ -20,3 +20,6 @@ NB_FOG_NODES: int = 10
 RANDOM_DIVIDER: int = 3
 PLOT_INTERVAL: int = 1
 
+# Plot resolution
+DPI_MULTIPLIER = 4
+

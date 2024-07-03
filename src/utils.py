@@ -3,6 +3,7 @@
 from __future__ import annotations
 from matplotlib import pyplot as plt
 from src.print import *
+from config import *
 import time
 import math
 import random
@@ -143,7 +144,7 @@ def process_simulation_evaluations(evaluations_per_mode: list[dict]) -> None:
 			plt.title(f"{label} over time - {name}")
 			plt.xlabel("Simulation Step")
 			plt.ylabel(label)
-			plt.savefig(f"{folder}/{label}.png")
+			plt.savefig(f"{folder}/{label}.png", dpi = DPI_MULTIPLIER * plt.rcParams["figure.dpi"])
 		
 		# Save data
 		with open(f"{folder}/data.json", "w", encoding = "utf-8") as file:
@@ -156,6 +157,8 @@ def process_simulation_evaluations(evaluations_per_mode: list[dict]) -> None:
 	# For each label, generate graphs comparing each assign mode
 	for label in evaluations_labels:
 		data: list[list[float]] = [assign_mode[label] for assign_mode in evaluations_per_mode]
+		minimized_label: str = label.replace(" ", "_").lower()
+
 		plt.clf()
 		for i, mode in enumerate(evaluations_per_mode):
 			plt.plot(data[i], label = mode["name"])
@@ -163,5 +166,5 @@ def process_simulation_evaluations(evaluations_per_mode: list[dict]) -> None:
 		plt.legend()
 		plt.xlabel("Simulation Step")
 		plt.ylabel(label)
-		plt.savefig(f"{root_folder}/{label}_comparison.png")
+		plt.savefig(f"{root_folder}/{minimized_label}_comparison.png", dpi = DPI_MULTIPLIER * plt.rcParams["figure.dpi"])
 
