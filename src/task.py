@@ -54,6 +54,9 @@ class Task():
 		Args:
 			new_state	(TaskStates):	New state for the task
 		"""
+		if self.state == new_state:	# stop if no changes
+			return
+
 		# If the task is in the current state list, move it to the new state list
 		if self in Task.all_tasks[self.state]:
 			Task.all_tasks[self.state].remove(self)
@@ -62,7 +65,7 @@ class Task():
 		# Else, add the task to the new list if it's not in it
 		elif self not in Task.all_tasks[new_state]:
 			Task.all_tasks[new_state].append(self)
-		
+
 		# Change the state to the new one
 		self.state = new_state
 	

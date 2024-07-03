@@ -39,9 +39,9 @@ if __name__ == "__main__":
 
 	modes_to_use: list[AssignMode] = [
 		AssignMode.ALL,
-		AssignMode(neighbours = True, cost = True),
-		AssignMode(neighbours = True),
-		AssignMode()
+		#AssignMode(neighbours = True, cost = True),
+		#AssignMode(neighbours = True),
+		#AssignMode()
 	]
 	assign_modes: list[tuple[AssignMode, str, tuple[int,int,int]]] = []
 	for folder, fog_resources in fog_resources_types:

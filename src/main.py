@@ -127,7 +127,7 @@ def run_simulation(
 		"folder": simulation_name,
 		"name": simplified_name,
 		"QoS Evaluations": qos_history,
-		"Allocated Tasks per Vehicle": allocated_tasks_history,
+		"Allocated Tasks": allocated_tasks_history,
 		"Nodes Usage": nodes_usage_history,
 		"Links Load": links_load_history,
 
@@ -139,7 +139,7 @@ def run_simulation(
 
 	# Add cumulative arrays
 	r_dict["Cumulative QoS"] = [sum(qos_history[:i]) for i in range(len(qos_history))]
-	r_dict["Cumulative Allocated Tasks Per Vehicle"] = [sum(allocated_tasks_history[:i]) for i in range(len(allocated_tasks_history))]
+	r_dict["Cumulative Allocated Tasks"] = [sum(allocated_tasks_history[:i]) for i in range(len(allocated_tasks_history))]
 	r_dict["Cumulative Completed Tasks"] = [sum(completed_tasks_history[:i]) for i in range(len(completed_tasks_history))]
 	r_dict["Cumulative Nodes Usage"] = [sum(nodes_usage_history[:i]) for i in range(len(nodes_usage_history))]
 	r_dict["Cumulative Links Load"] = [sum(links_load_history[:i]) for i in range(len(links_load_history))]

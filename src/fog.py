@@ -231,7 +231,7 @@ class FogNode():
 							debug(f"Moved task {task.id} from {self.fog_id} to {link.other.fog_id} because cost {task.cost} is lower than {incomming_task.cost}. Charge: {task.bandwidth_charge}")
 
 							# Revert assign the task (as the link sended it) to allow the assignment of the incomming one
-							self.revert_assign(task, is_last = False)
+							#self.revert_assign(task, is_last = False)
 							self.assign_task(vehicle, incomming_task)
 
 							# Add up the new charge to the link and return True
@@ -256,16 +256,14 @@ class FogNode():
 		""" Progress the tasks of the fog node, sending the results to the vehicles when completed and removing the tasks from the list """
 		from src.vehicle import Vehicle
 		new_list: list[tuple["Vehicle", Task]] = []
-		for pair in self.assigned_tasks:
-			task: Task = pair[1]
+		for vehicle, task in self.assigned_tasks:
 			task.progress(1)
 			if task.state == TaskStates.COMPLETED:
-				vehicle: Vehicle = pair[0]
 				vehicle.receive_task_result(task)
 				self.used_resources -= task.resource
 				self.calculate_usage()
 			else:
-				new_list.append(pair)
+				new_list.append((vehicle, task))
 		self.assigned_tasks = new_list
 
 	@staticmethod

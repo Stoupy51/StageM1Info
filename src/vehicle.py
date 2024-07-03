@@ -33,7 +33,7 @@ class Vehicle():
 		"""
 		return traci.vehicle.getPosition(self.vehicle_id)
 	
-	def generate_tasks(self, nb_tasks: tuple[int,int] = (10,30), random_resource_args: tuple = Resource.LOW_RANDOM_RESOURCE_ARGS, random_resolution_times: tuple = (1, 5, 1), random_costs: tuple[int,int,int] = Task.COST_RANGE) -> None:
+	def generate_tasks(self, nb_tasks: tuple[int,int] = (1,3), random_resource_args: tuple = Resource.LOW_RANDOM_RESOURCE_ARGS, random_resolution_times: tuple = (1, 5, 1), random_costs: tuple[int,int,int] = Task.COST_RANGE) -> None:
 		""" Generate tasks for the vehicle
 		Args:
 			nb_tasks				(tuple):	Min and Max number of tasks to generate
@@ -93,6 +93,7 @@ class Vehicle():
 		""" Destroy the vehicle by failing all remaining tasks """
 		for task in self.tasks:
 			if task.state == TaskStates.PENDING:
+				warning(f"Vehicle disappeared for: {task}")
 				task.change_state(TaskStates.FAILED)
 
 	@staticmethod
