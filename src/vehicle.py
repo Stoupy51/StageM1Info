@@ -90,6 +90,16 @@ class Vehicle():
 		# Color green if no task is PENDING, blue instead
 		color: tuple = (0, 255, 0) if nb_tasks == 0 else (0, 0, 255)
 		traci.vehicle.setColor(self.vehicle_id, color)
+	
+	def get_distance(self, fog: FogNode) -> float:
+		""" Get the distance between the vehicle and a fog node
+		Args:
+			fog	(FogNode):	Fog node to get the distance to
+		Returns:
+			float: Distance between the vehicle and the fog node
+		"""
+		vehicle_position: tuple[float,float] = self.get_position()
+		return math.dist(vehicle_position, fog.position) / 1000
 
 	def destroy(self) -> None:
 		""" Destroy the vehicle by failing all remaining tasks """

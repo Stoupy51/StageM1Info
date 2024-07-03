@@ -71,6 +71,7 @@ def run_simulation(
 	allocated_tasks_history: list[float] = []
 	nodes_usage_history: list[float] = []
 	links_load_history: list[float] = []
+	tasks_distance_history: list[float] = []
 	completed_tasks_history: list[int] = []
 	pending_tasks_history: list[int] = []
 	failed_tasks_history: list[int] = []
@@ -93,10 +94,11 @@ def run_simulation(
 		qos_history.append(qos)
 
 		# Get additional evaluations
-		allocated_tasks, nodes_usage, links_load, completed_tasks, pending_tasks, failed_tasks, total_tasks = Evaluator.get_eval_parameters(fog_list)
+		allocated_tasks, nodes_usage, links_load, tasks_distance, completed_tasks, pending_tasks, failed_tasks, total_tasks = Evaluator.get_eval_parameters(fog_list)
 		allocated_tasks_history.append(allocated_tasks)
 		nodes_usage_history.append(nodes_usage)
 		links_load_history.append(links_load)
+		tasks_distance_history.append(tasks_distance)
 		completed_tasks_history.append(completed_tasks)
 		pending_tasks_history.append(pending_tasks)
 		failed_tasks_history.append(failed_tasks)
@@ -130,6 +132,7 @@ def run_simulation(
 		"Allocated Tasks": allocated_tasks_history,
 		"Nodes Usage": nodes_usage_history,
 		"Links Load": links_load_history,
+		"Tasks Distance*Cost": tasks_distance_history,
 
 		"Completed Tasks": completed_tasks_history,
 		"Pending Tasks": pending_tasks_history,
@@ -143,6 +146,7 @@ def run_simulation(
 	r_dict["Cumulative Completed Tasks"] = [sum(completed_tasks_history[:i]) for i in range(len(completed_tasks_history))]
 	r_dict["Cumulative Nodes Usage"] = [sum(nodes_usage_history[:i]) for i in range(len(nodes_usage_history))]
 	r_dict["Cumulative Links Load"] = [sum(links_load_history[:i]) for i in range(len(links_load_history))]
+	r_dict["Cumulative Tasks Distance*Cost"] = [sum(tasks_distance_history[:i]) for i in range(len(tasks_distance_history))]
 
 	# Return the dict
 	return r_dict

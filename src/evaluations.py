@@ -5,6 +5,7 @@ from src.vehicle import Vehicle
 from src.fog import FogNode
 from config import *
 import numpy as np
+import traci
 
 # Evaluation of the network
 class Evaluator():
@@ -16,6 +17,7 @@ class Evaluator():
 		- The maximization of the number of allocated tasks per vehicle
 		- The minimization of Fog nodes usage
 		- The minimization of Fog nodes links load (how used)
+		- The minimization of the distance of the tasks from the vehicles multiplied by their cost
 		Args:
 			fogs	(set[FogNode]):	Set of fog nodes
 		Returns:
@@ -25,8 +27,15 @@ class Evaluator():
 		nodes_usage: float = np.var([fog.get_usage() for fog in fogs])
 		links_load: float = np.var([fog.get_links_load() for fog in fogs])
 
+		id_list: set[str] = set(traci.vehicle.getIDList())
+		tasks_distance_cost: float = sum([
+			vehicle.get_distance(fog) * task.cost
+			for fog in fogs for vehicle, task in fog.assigned_tasks
+			if vehicle.vehicle_id in id_list
+		])
+
 		# Calculate the QoS and return it
-		return (K1 * allocated_tasks) - (K2 * nodes_usage) - (K3 * links_load)
+		return (K_TASKS * allocated_tasks) - (K_NODES * nodes_usage) - (K_LINKS * links_load) - (K_COST * tasks_distance_cost)
 
 	@staticmethod
 	def get_eval_parameters(fogs: set[FogNode]) -> tuple[float]:
@@ -40,6 +49,12 @@ class Evaluator():
 		allocated_tasks: float = len(Task.all_tasks[TaskStates.IN_PROGRESS])
 		nodes_usage: float = np.var([fog.get_usage() for fog in fogs])
 		links_load: float = np.var([fog.get_links_load() for fog in fogs])
+		id_list: set[str] = set(traci.vehicle.getIDList())
+		tasks_distance_cost: float = sum([
+			vehicle.get_distance(fog) * task.cost
+			for fog in fogs for vehicle, task in fog.assigned_tasks
+			if vehicle.vehicle_id in id_list
+		])
 
 		# Other
 		completed_tasks: int = len(Task.all_tasks[TaskStates.COMPLETED])
@@ -48,5 +63,5 @@ class Evaluator():
 		total_tasks: int = sum([len(x) for x in Task.all_tasks.values()])
 
 		# Return everything
-		return allocated_tasks, nodes_usage, links_load, completed_tasks, pending_tasks, failed_tasks, total_tasks
+		return allocated_tasks, nodes_usage, links_load, tasks_distance_cost, completed_tasks, pending_tasks, failed_tasks, total_tasks
 

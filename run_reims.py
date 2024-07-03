@@ -33,15 +33,15 @@ def thread(args: tuple[AssignMode, str, tuple[int,int,int]]) -> dict:
 if __name__ == "__main__":
 	fog_resources_types: list[tuple[str, tuple[int,int,int]]] = [
 		("high",	Resource.HIGH_RANDOM_RESOURCE_ARGS),
-		#("medium",	Resource.MEDIUM_RANDOM_RESOURCE_ARGS),
-		#("extreme",	Resource.EXTREME_RANDOM_RESOURCE_ARGS),
+		("medium",	Resource.MEDIUM_RANDOM_RESOURCE_ARGS),
+		("extreme",	Resource.EXTREME_RANDOM_RESOURCE_ARGS),
 	]
 
 	modes_to_use: list[AssignMode] = [
 		AssignMode.ALL,
-		#AssignMode(neighbours = True, cost = True),
-		#AssignMode(neighbours = True),
-		#AssignMode()
+		AssignMode(neighbours = True, cost = True),
+		AssignMode(neighbours = True),
+		AssignMode(),
 	]
 	assign_modes: list[tuple[AssignMode, str, tuple[int,int,int]]] = []
 	for folder, fog_resources in fog_resources_types:
@@ -49,7 +49,6 @@ if __name__ == "__main__":
 
 	# Run the simulation in multiple threads
 	NB_THREADS: int = len(assign_modes)
-	#NB_THREADS: int = 1
 	with Pool(processes = NB_THREADS) as pool:
 		evaluations_per_mode: list[dict] = pool.map(thread, assign_modes)
 

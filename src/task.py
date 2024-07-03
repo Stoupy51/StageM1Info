@@ -41,13 +41,13 @@ class Task():
 		Task.all_tasks[self.state].append(self)
 
 		# Bandwidth charge needed to transfer the task from a node to another one
-		self.bandwidth_charge: int = int(K_BC * self.resolving_time)
+		self.bandwidth_charge: int = int(K_BANDWIDTH_CHARGE * self.resolving_time)
 	
 	def __str__(self) -> str:
 		limit_date: str = "None"
 		if self.time_constraint is not None:
 			limit_date = time.strftime("%H:%M:%S", time.localtime(self.time_constraint))
-		return f"{self.state} Task '{self.id}' with: Resource = {self.resource}, Resolving Time = {self.resolving_time}s, Cost = {self.cost}€, Time Constraint = [{limit_date}]"
+		return f"{self.state.name} Task '{self.id}' with: Resource = {self.resource}, Resolving Time = {self.resolving_time}s, Cost = {self.cost}€, Time Constraint = [{limit_date}]"
 	
 	def change_state(self, new_state: TaskStates) -> None:
 		""" Change the state of the task (removes it from the current state and adds it to the new state)

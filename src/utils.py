@@ -139,12 +139,13 @@ def process_simulation_evaluations(evaluations_per_mode: list[dict]) -> None:
 		name: str = data["name"]
 		os.makedirs(folder, exist_ok = True)
 		for label in evaluations_labels:
+			minimized_label: str = "".join(c for c in label.replace(" ", "_").lower() if c.isalnum() or c in ['_'])
 			plt.clf()
 			plt.plot(data[label])
 			plt.title(f"{label} over time - {name}")
 			plt.xlabel("Simulation Step")
 			plt.ylabel(label)
-			plt.savefig(f"{folder}/{label}.png", dpi = DPI_MULTIPLIER * plt.rcParams["figure.dpi"])
+			plt.savefig(f"{folder}/{minimized_label}.png", dpi = DPI_MULTIPLIER * plt.rcParams["figure.dpi"])
 		
 		# Save data
 		with open(f"{folder}/data.json", "w", encoding = "utf-8") as file:
@@ -157,7 +158,7 @@ def process_simulation_evaluations(evaluations_per_mode: list[dict]) -> None:
 	# For each label, generate graphs comparing each assign mode
 	for label in evaluations_labels:
 		data: list[list[float]] = [assign_mode[label] for assign_mode in evaluations_per_mode]
-		minimized_label: str = label.replace(" ", "_").lower()
+		minimized_label: str = "".join(c for c in label.replace(" ", "_").lower() if c.isalnum() or c in ['_'])
 
 		plt.clf()
 		for i, mode in enumerate(evaluations_per_mode):
