@@ -37,7 +37,7 @@ class Evaluator():
 			tuple[float]: Allocated tasks, nodes usage, links load, completed tasks, pending tasks, failed tasks, total tasks
 		"""
 		# QoS
-		allocated_tasks: float = len(Task.all_tasks[TaskStates.IN_PROGRESS]) / len(Vehicle.vehicles)
+		allocated_tasks: float = len(Task.all_tasks[TaskStates.IN_PROGRESS]) / len(Vehicle.vehicles) if len(Vehicle.vehicles) > 0 else 0
 		nodes_usage: float = np.var([fog.get_usage() for fog in fogs])
 		links_load: float = np.var([fog.get_links_load() for fog in fogs])
 
