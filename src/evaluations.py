@@ -21,7 +21,7 @@ class Evaluator():
 		Returns:
 			float: Quality of Service (QoS) = k1*allocated_tasks - k2*nodes_usage - k3*links_load
 		"""
-		allocated_tasks: float = len(Task.all_tasks[TaskStates.IN_PROGRESS]) / len(Vehicle.vehicles)
+		allocated_tasks: float = len(Task.all_tasks[TaskStates.IN_PROGRESS]) / len(Vehicle.vehicles) if len(Vehicle.vehicles) > 0 else 0
 		nodes_usage: float = np.var([fog.get_usage() for fog in fogs])
 		links_load: float = np.var([fog.get_links_load() for fog in fogs])
 
