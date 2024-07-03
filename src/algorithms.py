@@ -34,8 +34,9 @@ def solution_algorithm_step(fogs: set[FogNode], assign_mode: AssignMode) -> floa
 	start_time: float = time.perf_counter()
 
 	# Reset fog links charge
-	if FogNode.reset_links_charges(fogs):
-		print()	# Add a new line for better readability
+	FogNode.reset_links_charges(fogs, debug_msg = False)
+	# if FogNode.reset_links_charges(fogs, debug_msg = True):
+	# 	print()	# Add a new line for better readability
 
 	# Delete all vehicles that are not in the simulation anymore
 	Vehicle.acknowledge_removed_vehicles()

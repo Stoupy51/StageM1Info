@@ -84,6 +84,8 @@ class Vehicle():
 			if nearest_fog.ask_assign_task(self, task, mode = mode):
 				task.change_state(TaskStates.IN_PROGRESS)
 				nb_tasks -= 1
+			else:
+				warning(f"FogNode {nearest_fog.id} couldn't accept the task: {task}")
 		
 		# Color green if no task is PENDING, blue instead
 		color: tuple = (0, 255, 0) if nb_tasks == 0 else (0, 0, 255)

@@ -13,15 +13,15 @@ import math
 # Fog class
 class FogNode():
 	generated_nodes: set[FogNode] = set()
-	def __init__(self, fog_id: str, position: tuple[float,float], shape: list[tuple], color: tuple, resources: Resource = Resource()) -> None:
+	def __init__(self, id: str, position: tuple[float,float], shape: list[tuple], color: tuple, resources: Resource = Resource()) -> None:
 		""" FogNode constructor
 		Args:
-			fog_id		(str):		ID of the fog node
+			id		(str):		ID of the fog node
 			position	(tuple):	Position of the fog node
 			shape		(list):		Shape of the fog node
 			color		(tuple):	Color of the fog node
 		"""
-		self.fog_id: str = fog_id
+		self.id: str = id
 		self.position: tuple[float,float] = position
 		self.shape: list[tuple] = shape
 		self.color: tuple = color
@@ -30,12 +30,12 @@ class FogNode():
 		self.usage: float = 0.0
 		self.assigned_tasks: list[tuple["Vehicle",Task]] = []	# type: ignore
 		self.links: list[FogNodesLink] = []
-		traci.polygon.add(polygonID = fog_id, shape = self.get_adjusted_shape(), color = color, fill = True)
+		traci.polygon.add(polygonID = id, shape = self.get_adjusted_shape(), color = color, fill = True)
 		FogNode.generated_nodes.add(self)
 	
 	def __str__(self) -> str:
 		x, y = self.position
-		return f"FogNode '{self.fog_id}' with: Position = ({x:>7.2f}, {y:>7.2f}),\tResource = {self.resources}"
+		return f"FogNode '{self.id}' with: Position = ({x:>7.2f}, {y:>7.2f}),\tResource = {self.resources}"
 	
 	def get_adjusted_shape(self) -> list[tuple]:
 		""" Calculate the adjusted shape of the fog node """
@@ -61,7 +61,7 @@ class FogNode():
 			color	(tuple):	Color of the fog node
 		"""
 		self.color = tuple(color)
-		traci.polygon.setColor(self.fog_id, self.color)
+		traci.polygon.setColor(self.id, self.color)
 	
 	def has_enough_resources(self, task: Task) -> bool:
 		""" Check if the fog node has enough resources to resolve the task
@@ -93,28 +93,34 @@ class FogNode():
 			bandwidth: int = random_step(*bandwidth_range)
 			self.links.append(FogNodesLink(node, latence, bandwidth))
 	
-	def reset_links_charge(self) -> bool:
+	def reset_links_charge(self, debug_msg: bool) -> bool:
 		""" Reset the charge of all links of the fog node
+		Args:
+			debug_msg	(bool):	Whether to print debug messages
 		Returns:
 			bool: if any link got a charge before reset
 		"""
 		any_reset: bool = False
 		for link in self.links:
 			if link.charge != 0:
-				debug(link)
+				if debug_msg:
+					debug(link)
 				link.charge = 0
 				any_reset = True
 		return any_reset
 	
 	@staticmethod
-	def reset_links_charges(fogs: set[FogNode]) -> bool:
+	def reset_links_charges(fogs: set[FogNode], debug_msg: bool) -> bool:
 		""" Reset the charge of all links of all fog nodes
+		Args:
+			fogs		(set[FogNode]):	Set of fog nodes
+			debug_msg	(bool):			Whether to print debug messages
 		Returns:
 			bool: if any link got a charge before reset
 		"""
 		any_reset: bool = False
 		for fog in fogs:
-			if fog.reset_links_charge():
+			if fog.reset_links_charge(debug_msg):
 				any_reset = True
 		return any_reset
 	
@@ -227,11 +233,11 @@ class FogNode():
 
 						# If the link can handle the charge and the fog node accept the task,
 						if link.can_handle_charge(task.bandwidth_charge) and \
-						link.other.ask_assign_task(vehicle, task, mode = AssignMode(), from_vehicle = False):
-							debug(f"Moved task {task.id} from {self.fog_id} to {link.other.fog_id} because cost {task.cost} is lower than {incomming_task.cost}. Charge: {task.bandwidth_charge}")
+						link.other.ask_assign_task(vehicle, task, mode = mode, from_vehicle = False):
+							debug(f"Moved task {task.id} from {self.id} to {link.other.id} because cost {task.cost} is lower than {incomming_task.cost}. Charge: {task.bandwidth_charge}")
 
 							# Revert assign the task (as the link sended it) to allow the assignment of the incomming one
-							#self.revert_assign(task, is_last = False)
+							self.revert_assign(task, is_last = False)
 							self.assign_task(vehicle, incomming_task)
 
 							# Add up the new charge to the link and return True
@@ -267,14 +273,14 @@ class FogNode():
 		self.assigned_tasks = new_list
 
 	@staticmethod
-	def get_node_from_id(fog_id: str) -> FogNode:
+	def get_node_from_id(id: str) -> FogNode:
 		""" Get a fog node from its ID
 		Args:
-			fog_id	(str):	ID of the fog node
+			id	(str):	ID of the fog node
 		Returns:
 			FogNode: Fog node if found, None otherwise
 		"""
-		matching = [node for node in FogNode.generated_nodes if node.fog_id == fog_id]
+		matching = [node for node in FogNode.generated_nodes if node.id == id]
 		if len(matching) == 0:
 			return None
 		return matching[0]
@@ -317,8 +323,8 @@ class FogNode():
 			y += center[1]
 
 			# Add the fog node
-			fog_id: str = "fog" + str(i)
-			fog_list.add(FogNode(fog_id, (x, y), fog_shape, fog_color))
+			id: str = "fog" + str(i)
+			fog_list.add(FogNode(id, (x, y), fog_shape, fog_color))
 		
 		# Return the list of fog nodes
 		return fog_list
@@ -338,7 +344,7 @@ class FogNodesLink():
 		self.charge: int = 0
 	
 	def __str__(self) -> str:
-		return f"Link to {self.other.fog_id} with: Latence = {self.latence}, Bandwidth = {self.bandwidth}MB/s, Current charge = {self.charge}MB"
+		return f"Link to {self.other.id} with: Latence = {self.latence}, Bandwidth = {self.bandwidth}MB/s, Current charge = {self.charge}MB"
 	
 	def can_handle_charge(self, incomming: int) -> bool:
 		""" Check if the link can handle the charge
