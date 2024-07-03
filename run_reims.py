@@ -16,12 +16,9 @@ OPEN_GUI: bool = False		# "sumo-gui" when True, "sumo" when False
 
 # Thread method
 def thread(args: tuple[AssignMode, str, tuple[int,int,int]]) -> dict:
-	assign_mode: AssignMode = args[0]
-	folder: str = args[1]
-	fog_resources: tuple[int,int,int] = args[2]
 	return run_simulation(
-		simulation_name = f"outputs/{folder}/Reims_{assign_mode.name}",
-		assign_mode = assign_mode,
+		simulation_name = f"outputs/{args[1]}/Reims_{args[0].name}",
+		assign_mode = args[0],
 		sumo_config = SUMO_CONFIG,
 		visual_center = VISUAL_CENTER,
 		seed = SEED,
@@ -29,7 +26,7 @@ def thread(args: tuple[AssignMode, str, tuple[int,int,int]]) -> dict:
 		auto_start = AUTO_START,
 		auto_quit = AUTO_QUIT,
 		open_gui = OPEN_GUI,
-		fog_resources = fog_resources
+		fog_resources = args[2]
 	)
 
 # Main method
@@ -40,21 +37,27 @@ if __name__ == "__main__":
 		("extreme",	Resource.EXTREME_RANDOM_RESOURCE_ARGS),
 	]
 
-	nb_modes_per_type: int = 4
+	modes_to_use: list[AssignMode] = [
+		AssignMode.ALL,
+		AssignMode(neighbours = True, cost = True),
+		AssignMode(neighbours = True),
+		AssignMode()
+	]
 	assign_modes: list[tuple[AssignMode, str, tuple[int,int,int]]] = []
 	for folder, fog_resources in fog_resources_types:
-		assign_modes += [
-			(AssignMode.ALL,								folder, fog_resources),
-			(AssignMode(neighbours = True, cost = True),	folder, fog_resources),
-			(AssignMode(neighbours = True),					folder, fog_resources),
-			(AssignMode(),									folder, fog_resources),
-		]
+		assign_modes += [(x, folder, fog_resources) for x in modes_to_use]
+
+	# Run the simulation in multiple threads
 	NB_THREADS: int = len(assign_modes)
 	#NB_THREADS: int = 1
 	with Pool(processes = NB_THREADS) as pool:
 		evaluations_per_mode: list[dict] = pool.map(thread, assign_modes)
-	
+
+	# Get the number of types of fog resources and modes
 	nb_types: int = len(fog_resources_types)
+	nb_modes_per_type: int = len(modes_to_use)
+
+	# For each type, process the results
 	for i in range(nb_types):
 		start_index: int = i * nb_modes_per_type
 		end_index: int = (i + 1) * nb_modes_per_type
