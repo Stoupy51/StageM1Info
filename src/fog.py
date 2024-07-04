@@ -5,6 +5,7 @@ from src.resources import Resource
 from src.task import Task, TaskStates
 from src.utils import *
 from src.print import *
+from config import *
 import traci
 import random
 import math
@@ -85,6 +86,7 @@ class FogNode():
 			if node != self
 		]
 		neighbours.sort(key = lambda pair: pair[0])
+		neighbours = neighbours[:MAX_NEIGHBOURS]
 
 		# Create links to each neighbour
 		self.links: list[FogNodesLink] = []
