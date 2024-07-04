@@ -60,9 +60,11 @@ class FogNode():
 		return self.used_resources
 	
 	def add_task_distance(self, distance: float) -> None:
+		distance = math.sqrt(distance)
 		self.task_distances += distance
 		FogNode.all_task_distances += distance
 	def remove_task_distance(self, distance: float) -> None:
+		distance = math.sqrt(distance)
 		self.task_distances -= distance
 		FogNode.all_task_distances -= distance
 	

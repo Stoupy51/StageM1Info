@@ -10,7 +10,7 @@ K_BANDWIDTH_CHARGE: float = 5.0
 K_TASKS: float = 3.0		# Coefficient for the number of allocated tasks in the QoS
 K_NODES: float = 1.0		# Coefficient for the nodes usage
 K_LINKS: float = 1.0		# Coefficient for the links load
-K_COST: float = 0.5			# Coefficient for the cost of the tasks multiplied by the distance from the vehicle
+K_COST: float = 0.1			# Coefficient for the cost of the tasks multiplied by the distance from the vehicle
 
 
 ## Constants

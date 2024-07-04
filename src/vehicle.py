@@ -68,7 +68,7 @@ class Vehicle():
 		if task.state != TaskStates.COMPLETED:
 			task.change_state(TaskStates.COMPLETED)
 	
-	def assign_tasks(self, fogs: set[FogNode], mode: AssignMode = AssignMode.ALL) -> None:
+	def assign_tasks(self, mode: AssignMode = AssignMode.ALL) -> None:
 		""" Assign pensing tasks to the nearest fog node
 		Args:
 			fogs			(set[FogNode]):	Set of fog nodes
@@ -96,7 +96,7 @@ class Vehicle():
 		"""
 		vehicle_position: tuple[float,float] = self.get_position()
 		for fog in fogs:
-			self.fog_distances[fog] = math.dist(vehicle_position, fog.position) / 1000
+			self.fog_distances[fog] = math.dist(vehicle_position, fog.position)
 	
 	def get_distance_to_fog(self, fog: FogNode) -> float:
 		""" Get the distance between the vehicle and a fog node

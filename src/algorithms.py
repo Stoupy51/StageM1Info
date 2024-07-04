@@ -56,7 +56,7 @@ def solution_algorithm_step(fogs: set[FogNode], assign_mode: AssignMode) -> floa
 	# For each not assigned task, ask the nearest fog node to resolve the task
 	pending_vehicles: list[Vehicle] = [vehicle for vehicle in Vehicle.vehicles if vehicle.not_finished_tasks > 0]
 	for vehicle in pending_vehicles:
-		vehicle.assign_tasks(fogs, assign_mode)
+		vehicle.assign_tasks(assign_mode)
 	
 	# Change fog color depending on their resources
 	FogNode.color_usage(fogs)
