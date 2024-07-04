@@ -14,6 +14,8 @@ import math
 # Fog class
 class FogNode():
 	generated_nodes: set[FogNode] = set()
+	all_task_distances: float = 0.0
+
 	def __init__(self, id: str, position: tuple[float,float], shape: list[tuple], color: tuple, resources: Resource = Resource()) -> None:
 		""" FogNode constructor
 		Args:
@@ -32,6 +34,7 @@ class FogNode():
 		self.assigned_tasks: list[tuple["Vehicle",Task]] = []	# type: ignore
 		self.links: list[FogNodesLink] = []
 		traci.polygon.add(polygonID = id, shape = self.get_adjusted_shape(), color = color, fill = True)
+		self.task_distances: float = 0.0	# Indicates the sum of the task distances to their vehicle
 		FogNode.generated_nodes.add(self)
 	
 	def __str__(self) -> str:
@@ -55,6 +58,13 @@ class FogNode():
 		self.resources = resources
 	def get_used_resources(self) -> Resource:
 		return self.used_resources
+	
+	def add_task_distance(self, distance: float) -> None:
+		self.task_distances += distance
+		FogNode.all_task_distances += distance
+	def remove_task_distance(self, distance: float) -> None:
+		self.task_distances -= distance
+		FogNode.all_task_distances -= distance
 	
 	def set_color(self, color: tuple) -> None:
 		""" Set the color of the fog node
@@ -149,7 +159,7 @@ class FogNode():
 		Returns:
 			float: Sum of the Fog nodes links load
 		"""
-		return sum([link.get_usage() for link in self.links])
+		return sum(link.get_usage() for link in self.links)
 	
 	def assign_task(self, vehicle: "Vehicle", task: Task) -> TaskStates:	# type: ignore
 		""" Assign a task to the fog node and returns the old state of the task\n
@@ -161,15 +171,22 @@ class FogNode():
 		"""
 		old_state: TaskStates = task.state
 		task.progress(0)
+
+		# Register task and calculate the new usage
 		self.assigned_tasks.append((vehicle, task))
 		self.used_resources += task.resource
 		self.calculate_usage()
+
+		# Add up the task distance
+		task.calculate_distance_to_vehicle(vehicle, self)
+		self.add_task_distance(task.distance_to_vehicle * task.cost)
+
 		return old_state
 	
 	def revert_assign(self, assigned_task: Task, old_state: TaskStates = None, is_last: bool = True) -> None:
 		""" Revert the assignation of a task to the fog node
 		Args:
-			task			(Task):			Task to revert
+			assigned_task	(Task):			Task to revert
 			old_state		(TaskStates):	Old state of the task
 		"""
 		self.used_resources -= assigned_task.resource
@@ -219,6 +236,7 @@ class FogNode():
 				if new_qos >= old_qos:
 					return True
 				self.revert_assign(incomming_task, old_state)
+				self.remove_task_distance(incomming_task.distance_to_vehicle * incomming_task.cost)
 
 			# Else, accept the task as we have enough resources
 			else:
@@ -230,7 +248,8 @@ class FogNode():
 
 			# For each replaceable tasks, try to assign to each neighbour and stop if any accept
 			if mode.cost:
-				for vehicle, task in self.get_replaceable_tasks(incomming_task): 
+				for vehicle, task in self.get_replaceable_tasks(incomming_task):
+					task_distance: float = task.distance_to_vehicle * task.cost
 					for link in self.links:
 
 						# If the link can handle the charge and the fog node accept the task,
@@ -240,6 +259,7 @@ class FogNode():
 
 							# Revert assign the task (as the link sended it) to allow the assignment of the incomming one
 							self.revert_assign(task, is_last = False)
+							self.remove_task_distance(task_distance)
 							self.assign_task(vehicle, incomming_task)
 
 							# Add up the new charge to the link and return True
@@ -268,6 +288,8 @@ class FogNode():
 			task.progress(1)
 			if task.state == TaskStates.COMPLETED:
 				vehicle.receive_task_result(task)
+
+				self.remove_task_distance(task.distance_to_vehicle * task.cost)
 				self.used_resources -= task.resource
 				self.calculate_usage()
 			else:

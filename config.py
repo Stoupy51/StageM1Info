@@ -18,7 +18,7 @@ FOG_COLOR: tuple = (255, 0, 0, 255)
 FOG_SIZE: int = 50
 FOG_SHAPE: list[tuple] = [(0, 0), (0, FOG_SIZE), (FOG_SIZE, FOG_SIZE), (FOG_SIZE, 0)]
 NB_FOG_NODES: int = 10
-MAX_NEIGHBOURS: int = 3
+MAX_NEIGHBOURS: int = 5
 RANDOM_DIVIDER: int = 3
 PLOT_INTERVAL: int = 1
 

@@ -98,14 +98,14 @@ class Vehicle():
 		for fog in fogs:
 			self.fog_distances[fog] = math.dist(vehicle_position, fog.position) / 1000
 	
-	def get_distance_to_fog(self, fog: FogNode):
+	def get_distance_to_fog(self, fog: FogNode) -> float:
 		""" Get the distance between the vehicle and a fog node
 		Args:
 			fog	(FogNode):	Fog node to calculate the distance to
 		Returns:
 			float: Distance between the vehicle and the fog node
 		"""
-		return self.fog_distances.get(fog, 0)
+		return self.fog_distances.get(fog, 0.0)
 
 	def destroy(self) -> None:
 		""" Destroy the vehicle by failing all remaining tasks """
@@ -143,7 +143,7 @@ class Vehicle():
 	def acknowledge_new_vehicles() -> None:
 		""" Acknowledge new vehicles in the simulation """
 		id_list: set = set(traci.vehicle.getIDList())
-		vehicle_ids: set = set([vehicle.vehicle_id for vehicle in Vehicle.vehicles])
+		vehicle_ids: set = set(vehicle.vehicle_id for vehicle in Vehicle.vehicles)
 		not_known_vehicles: set = id_list - vehicle_ids
 		for vehicle_id in not_known_vehicles:
 			Vehicle(vehicle_id)

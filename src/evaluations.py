@@ -22,21 +22,12 @@ class Evaluator():
 		Args:
 			fogs	(set[FogNode]):	Set of fog nodes
 		Returns:
-			float: Quality of Service (QoS) = k1*allocated_tasks - k2*nodes_usage - k3*links_load
+			float: Quality of Service (QoS) = k1*allocated_tasks - k2*nodes_usage - k3*links_load - k4*task_distance_cost
 		"""
-		allocated_tasks: float = len(Task.all_tasks[TaskStates.IN_PROGRESS])
-		nodes_usage: float = np.var([fog.get_usage() for fog in fogs])
-		links_load: float = np.var([fog.get_links_load() for fog in fogs])
-
-		id_list: set[str] = set(traci.vehicle.getIDList())
-		tasks_distance_cost: float = sum([
-			vehicle.get_distance_to_fog(fog) * task.cost
-			for fog in fogs for vehicle, task in fog.assigned_tasks
-			if vehicle.vehicle_id in id_list
-		])
-
-		# Calculate the QoS and return it
-		return (K_TASKS * allocated_tasks) - (K_NODES * nodes_usage) - (K_LINKS * links_load) - (K_COST * tasks_distance_cost)
+		return (K_TASKS * len(Task.all_tasks[TaskStates.IN_PROGRESS])) \
+			- (K_NODES * np.var([fog.get_usage() for fog in fogs])) \
+			- (K_LINKS * np.var([fog.get_links_load() for fog in fogs])) \
+			- (K_COST * FogNode.all_task_distances)
 
 	@staticmethod
 	def get_eval_parameters(fogs: set[FogNode]) -> dict[str,float]:
@@ -50,18 +41,13 @@ class Evaluator():
 		allocated_tasks: float = len(Task.all_tasks[TaskStates.IN_PROGRESS])
 		nodes_usage: float = np.var([fog.get_usage() for fog in fogs])
 		links_load: float = np.var([fog.get_links_load() for fog in fogs])
-		id_list: set[str] = set(traci.vehicle.getIDList())
-		tasks_distance_cost: float = sum([
-			vehicle.get_distance_to_fog(fog) * task.cost
-			for fog in fogs for vehicle, task in fog.assigned_tasks
-			if vehicle.vehicle_id in id_list
-		])
+		tasks_distance_cost: float = FogNode.all_task_distances
 
 		# Other
 		completed_tasks: int = len(Task.all_tasks[TaskStates.COMPLETED])
 		pending_tasks: int = len(Task.all_tasks[TaskStates.PENDING])
 		failed_tasks: int = len(Task.all_tasks[TaskStates.FAILED])
-		total_tasks: int = sum([len(x) for x in Task.all_tasks.values()])
+		total_tasks: int = sum(len(x) for x in Task.all_tasks.values())
 
 		# Return everything
 		return {

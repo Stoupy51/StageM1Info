@@ -60,7 +60,7 @@ def run_simulation(
 	fog_list: set[FogNode] = FogNode.random_nodes(NB_FOG_NODES, (OFFSET_X, OFFSET_Y), visual_center, RANDOM_DIVIDER, FOG_SHAPE, FOG_COLOR)
 
 	# Setup random resources for fog nodes
-	fog_link_bandwidth_range: tuple[int,int,int] = tuple([x // 4 for x in fog_resources[0]])	# Bandwidth = (cpu resource // 4) to scale with it.
+	fog_link_bandwidth_range: tuple[int,int,int] = tuple(x // 4 for x in fog_resources[0])	# Bandwidth = (cpu resource // 4) to scale with it.
 	for fog_node in fog_list:
 		fog_node.set_resources(Resource.random(*fog_resources))
 		fog_node.set_neighbours(nodes = fog_list, bandwidth_range = fog_link_bandwidth_range)

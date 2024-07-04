@@ -39,6 +39,7 @@ class Task():
 		self.time_constraint: int = time_constraint
 		self.state: TaskStates = TaskStates.PENDING
 		Task.all_tasks[self.state].append(self)
+		self.distance_to_vehicle: float = 0.0
 
 		# Bandwidth charge needed to transfer the task from a node to another one
 		self.bandwidth_charge: int = int(K_BANDWIDTH_CHARGE * self.resolving_time)
@@ -68,6 +69,14 @@ class Task():
 
 		# Change the state to the new one
 		self.state = new_state
+	
+	def calculate_distance_to_vehicle(self, vehicle: "Vehicle", fog: "FogNode") -> None:	# type: ignore
+		""" Calculate the distance to the vehicle
+		Args:
+			vehicle		(Vehicle):	Vehicle to calculate the distance to
+			fog			(FogNode):	Fog node to calculate the distance to
+		"""
+		self.distance_to_vehicle = vehicle.get_distance_to_fog(fog)
 	
 	RESOLVING_RANGE: tuple[int,int,int] = (10, 60, 5)
 	COST_RANGE: tuple[int,int,int] = (1, 10, 1)
