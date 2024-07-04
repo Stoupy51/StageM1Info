@@ -247,7 +247,7 @@ class FogNode():
 							return True
 
 			# Ask the neighbours if they can assign the task
-			if mode.neighbours:
+			elif mode.neighbours:
 				for link in self.links:
 
 					# If the link can handle the charge and the fog node accept the task,

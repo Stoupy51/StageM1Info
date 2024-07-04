@@ -33,8 +33,8 @@ def thread(args: tuple[AssignMode, str, tuple[int,int,int]]) -> dict:
 if __name__ == "__main__":
 	fog_resources_types: list[tuple[str, tuple[int,int,int]]] = [
 		("high",	Resource.HIGH_RANDOM_RESOURCE_ARGS),
-		("medium",	Resource.MEDIUM_RANDOM_RESOURCE_ARGS),
-		("extreme",	Resource.EXTREME_RANDOM_RESOURCE_ARGS),
+		#("medium",	Resource.MEDIUM_RANDOM_RESOURCE_ARGS),
+		#("extreme",	Resource.EXTREME_RANDOM_RESOURCE_ARGS),
 	]
 
 	modes_to_use: list[AssignMode] = [

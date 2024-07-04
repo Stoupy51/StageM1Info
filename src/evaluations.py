@@ -6,6 +6,7 @@ from src.fog import FogNode
 from config import *
 import numpy as np
 import traci
+import time
 
 # Evaluation of the network
 class Evaluator():
@@ -29,7 +30,7 @@ class Evaluator():
 
 		id_list: set[str] = set(traci.vehicle.getIDList())
 		tasks_distance_cost: float = sum([
-			vehicle.get_distance(fog) * task.cost
+			vehicle.get_distance_to_fog(fog) * task.cost
 			for fog in fogs for vehicle, task in fog.assigned_tasks
 			if vehicle.vehicle_id in id_list
 		])
@@ -38,12 +39,12 @@ class Evaluator():
 		return (K_TASKS * allocated_tasks) - (K_NODES * nodes_usage) - (K_LINKS * links_load) - (K_COST * tasks_distance_cost)
 
 	@staticmethod
-	def get_eval_parameters(fogs: set[FogNode]) -> tuple[float]:
+	def get_eval_parameters(fogs: set[FogNode]) -> dict[str,float]:
 		""" Returns parameters for the evaluation of the network\n
 		Args:
 			fogs	(set[FogNode]):	Set of fog nodes
 		Returns:
-			tuple[float]: Allocated tasks, nodes usage, links load, completed tasks, pending tasks, failed tasks, total tasks
+			dict[str,float]: Allocated tasks, nodes usage, links load, completed tasks, pending tasks, failed tasks, total tasks
 		"""
 		# QoS
 		allocated_tasks: float = len(Task.all_tasks[TaskStates.IN_PROGRESS])
@@ -51,7 +52,7 @@ class Evaluator():
 		links_load: float = np.var([fog.get_links_load() for fog in fogs])
 		id_list: set[str] = set(traci.vehicle.getIDList())
 		tasks_distance_cost: float = sum([
-			vehicle.get_distance(fog) * task.cost
+			vehicle.get_distance_to_fog(fog) * task.cost
 			for fog in fogs for vehicle, task in fog.assigned_tasks
 			if vehicle.vehicle_id in id_list
 		])
@@ -63,5 +64,16 @@ class Evaluator():
 		total_tasks: int = sum([len(x) for x in Task.all_tasks.values()])
 
 		# Return everything
-		return allocated_tasks, nodes_usage, links_load, tasks_distance_cost, completed_tasks, pending_tasks, failed_tasks, total_tasks
+		return {
+			"allocated_tasks": allocated_tasks,
+			"nodes_usage": nodes_usage,
+			"links_load": links_load,
+			"tasks_distance_cost": tasks_distance_cost,
+
+			"completed_tasks": completed_tasks,
+			"pending_tasks": pending_tasks,
+			"failed_tasks": failed_tasks,
+
+			"total_tasks": total_tasks,
+		}
 

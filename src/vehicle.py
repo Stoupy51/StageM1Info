@@ -21,6 +21,7 @@ class Vehicle():
 		self.vehicle_id = vehicle_id
 		self.tasks = tasks if tasks is not None else []
 		self.not_finished_tasks: int = len([task for task in self.tasks if task.state not in [TaskStates.COMPLETED, TaskStates.FAILED]])
+		self.fog_distances: dict[FogNode,float] = {}
 		Vehicle.vehicles.add(self)
 	
 	def __str__(self) -> str:
@@ -49,15 +50,14 @@ class Vehicle():
 			self.tasks.append(Task(task_id, resource = random_resource, resolving_time = random_resolving_time, cost = random_cost))
 			self.not_finished_tasks += 1
 	
-	def get_nearest_fogs(self, fogs: set[FogNode]) -> FogNode:
-		""" Get the nearest fog nodes to the vehicle
-		Args:
-			fogs	(set):	Set of fog nodes
+	def get_nearest_fogs(self) -> list[FogNode]:
+		""" Get the nearest fog nodes to the vehicle (by distance)
 		Returns:
 			list[FogNode]: List of nearest fog nodes
 		"""
-		vehicle_position: tuple = traci.vehicle.getPosition(self.vehicle_id)
-		return sorted(fogs, key = lambda fog: math.dist(fog.position, vehicle_position))
+		self.fog_distances: dict[FogNode, float]
+		sorted_fogs: list[tuple[FogNode, float]] = sorted(self.fog_distances.items(), key = lambda item: item[1])
+		return [fog for fog, _ in sorted_fogs]
 	
 	def receive_task_result(self, task: Task) -> None:
 		""" Receive the result of a task
@@ -75,7 +75,7 @@ class Vehicle():
 			mode			(AssignMode):	Configuration of how the tasks are assigned
 		"""
 		# Get the nearest fog and the pending tasks
-		nearest_fog: FogNode = self.get_nearest_fogs(fogs)[0]
+		nearest_fog: FogNode = self.get_nearest_fogs()[0]
 		pending_tasks: list[Task] = [task for task in self.tasks if task.state == TaskStates.PENDING]
 		nb_tasks: int = len(pending_tasks)
 
@@ -89,21 +89,28 @@ class Vehicle():
 		color: tuple = (0, 255, 0) if nb_tasks == 0 else (0, 0, 255)
 		traci.vehicle.setColor(self.vehicle_id, color)
 	
-	def get_distance(self, fog: FogNode) -> float:
+	def set_distance_to_fogs(self, fogs: set[FogNode]) -> None:
+		""" Get the distance between the vehicle and all fog nodes and put it in the variable "fog_distances"\n
+		Args:
+			fogs	(set[FogNode]):	Fog nodes to calculate the distance to
+		"""
+		vehicle_position: tuple[float,float] = self.get_position()
+		for fog in fogs:
+			self.fog_distances[fog] = math.dist(vehicle_position, fog.position) / 1000
+	
+	def get_distance_to_fog(self, fog: FogNode):
 		""" Get the distance between the vehicle and a fog node
 		Args:
-			fog	(FogNode):	Fog node to get the distance to
+			fog	(FogNode):	Fog node to calculate the distance to
 		Returns:
 			float: Distance between the vehicle and the fog node
 		"""
-		vehicle_position: tuple[float,float] = self.get_position()
-		return math.dist(vehicle_position, fog.position) / 1000
+		return self.fog_distances.get(fog, 0)
 
 	def destroy(self) -> None:
 		""" Destroy the vehicle by failing all remaining tasks """
 		for task in self.tasks:
 			if task.state == TaskStates.PENDING:
-				warning(f"Vehicle disappeared for: {task}")
 				task.change_state(TaskStates.FAILED)
 
 	@staticmethod

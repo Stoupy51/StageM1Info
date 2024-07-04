@@ -94,15 +94,15 @@ def run_simulation(
 		qos_history.append(qos)
 
 		# Get additional evaluations
-		allocated_tasks, nodes_usage, links_load, tasks_distance, completed_tasks, pending_tasks, failed_tasks, total_tasks = Evaluator.get_eval_parameters(fog_list)
-		allocated_tasks_history.append(allocated_tasks)
-		nodes_usage_history.append(nodes_usage)
-		links_load_history.append(links_load)
-		tasks_distance_history.append(tasks_distance)
-		completed_tasks_history.append(completed_tasks)
-		pending_tasks_history.append(pending_tasks)
-		failed_tasks_history.append(failed_tasks)
-		total_tasks_history.append(total_tasks)
+		evals = Evaluator.get_eval_parameters(fog_list)
+		allocated_tasks_history.append(evals["allocated_tasks"])
+		nodes_usage_history.append(evals["nodes_usage"])
+		links_load_history.append(evals["links_load"])
+		tasks_distance_history.append(evals["tasks_distance_cost"])
+		completed_tasks_history.append(evals["completed_tasks"])
+		pending_tasks_history.append(evals["pending_tasks"])
+		failed_tasks_history.append(evals["failed_tasks"])
+		total_tasks_history.append(evals["total_tasks"])
 
 		# Make a plot with all evaluations
 		if step % PLOT_INTERVAL == 0 and open_gui:
@@ -141,12 +141,9 @@ def run_simulation(
 	}
 
 	# Add cumulative arrays
-	r_dict["Cumulative QoS"] = [sum(qos_history[:i]) for i in range(len(qos_history))]
-	r_dict["Cumulative Allocated Tasks"] = [sum(allocated_tasks_history[:i]) for i in range(len(allocated_tasks_history))]
-	r_dict["Cumulative Completed Tasks"] = [sum(completed_tasks_history[:i]) for i in range(len(completed_tasks_history))]
-	r_dict["Cumulative Nodes Usage"] = [sum(nodes_usage_history[:i]) for i in range(len(nodes_usage_history))]
-	r_dict["Cumulative Links Load"] = [sum(links_load_history[:i]) for i in range(len(links_load_history))]
-	r_dict["Cumulative Tasks Distance*Cost"] = [sum(tasks_distance_history[:i]) for i in range(len(tasks_distance_history))]
+	for key, value in list(r_dict.items()):
+		if key not in ["folder", "name"]:
+			r_dict[f"Cumulative {key}"] = [sum(value[:i]) for i in range(len(value))]
 
 	# Return the dict
 	return r_dict

@@ -49,6 +49,10 @@ def solution_algorithm_step(fogs: set[FogNode], assign_mode: AssignMode) -> floa
 		if vehicle.not_finished_tasks == 0:
 			Vehicle.generate_tasks(vehicle)
 	
+	# For each vehicle, calculate their distance to the fogs
+	for vehicle in Vehicle.vehicles:
+		vehicle.set_distance_to_fogs(fogs)
+	
 	# For each not assigned task, ask the nearest fog node to resolve the task
 	pending_vehicles: list[Vehicle] = [vehicle for vehicle in Vehicle.vehicles if vehicle.not_finished_tasks > 0]
 	for vehicle in pending_vehicles:
