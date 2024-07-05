@@ -12,7 +12,7 @@ VISUAL_CENTER: tuple[int,int] = (1200, 1600)
 DEBUG_PERF: bool = False
 AUTO_START: bool = True		# --start
 AUTO_QUIT: bool = True		# --quit-on-end
-OPEN_GUI: bool = False		# "sumo-gui" when True, "sumo" when False
+OPEN_GUI: bool = True		# "sumo-gui" when True, "sumo" when False
 
 # Thread method
 def thread(args: tuple[AssignMode, str, tuple[int,int,int]]) -> dict:
@@ -33,8 +33,8 @@ def thread(args: tuple[AssignMode, str, tuple[int,int,int]]) -> dict:
 if __name__ == "__main__":
 	fog_resources_types: list[tuple[str, tuple[int,int,int]]] = [
 		("high",	Resource.HIGH_RANDOM_RESOURCE_ARGS),
-		("medium",	Resource.MEDIUM_RANDOM_RESOURCE_ARGS),
-		("extreme",	Resource.EXTREME_RANDOM_RESOURCE_ARGS),
+		#("medium",	Resource.MEDIUM_RANDOM_RESOURCE_ARGS),
+		#("extreme",	Resource.EXTREME_RANDOM_RESOURCE_ARGS),
 	]
 
 	modes_to_use: list[AssignMode] = [
