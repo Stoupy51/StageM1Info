@@ -1,0 +1,283 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<diagram program="umlet" version="15.1">
+  <zoom_level>10</zoom_level>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>350</x>
+      <y>390</y>
+      <w>370</w>
+      <h>280</h>
+    </coordinates>
+    <panel_attributes>bg=green
+Task
+--
+id: str
+vehicle: Vehicle
+resource: Resource
+resolving_time: int
+cost: int
+state: TaskStates
+distance_to_vehicle: float
+bandwidth_charge: int
+--
+change_state(TaskStates): None
+calculate_distance_to_vehicle(Vehicle, FogNode): None
+progress(int): None
+--
+/_@static_/
+*/all_tasks: dict[TaskStates, list[Task]]/*
+/random(str, Resource, tuple[int], tuple[int]): Task/</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>40</x>
+      <y>110</y>
+      <w>250</w>
+      <h>220</h>
+    </coordinates>
+    <panel_attributes>Resource
+--
+cpu: int
+ram: int
+storage: int
+--
+add(Resource): Resource
+sub(Resource): Resource
+mul(float): Resource
+div(float|Resource): Resource
+mod(float|Resource): Resource
+max(): int
+--
+/_@static_/
+/random(cpu, ram, storage): Resource)/
+
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>150</x>
+      <y>320</y>
+      <w>220</w>
+      <h>120</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-</panel_attributes>
+    <additional_attributes>200.0;100.0;10.0;100.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>80</x>
+      <y>470</y>
+      <w>150</w>
+      <h>100</h>
+    </coordinates>
+    <panel_attributes>TaskStates (enum)
+--
+PENDING = 0
+IN_PROGRESS = 1
+COMPLETED = 2
+FAILED = 3
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>220</x>
+      <y>510</y>
+      <w>150</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>lt=-&gt;</panel_attributes>
+    <additional_attributes>10.0;10.0;130.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>1000</x>
+      <y>380</y>
+      <w>370</w>
+      <h>280</h>
+    </coordinates>
+    <panel_attributes>bg=red
+Vehicle
+--
+vehicle_id: str
+tasks: list[Tasks]
+not_finished_tasks: int
+fog_distances: dict[FogNode,float]
+--
+get_position(): tuple
+generate_tasks(tuple, tuple, tuple, tuple): None
+get_nearest_fogs(): list[FogNode]
+receive_task_result(Task): None
+assign_tasks(mode: AssignMode): None
+destroy(): None
+--
+/_@static_/
+*/vehicles: set[Vehicle]/*
+/acknowledge_removed_vehicles(): None/
+/acknowledge_new_vehicles(): None/</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>650</x>
+      <y>20</y>
+      <w>430</w>
+      <h>340</h>
+    </coordinates>
+    <panel_attributes>bg=orange
+FogNode
+--
+id: str
+position: tuple[float,float] = position
+resources: Resource = resources
+used_resources = Resource
+assigned_tasks: list[Task]
+links: list[FogNodesLink]
+--
+get_used_resources(): Resource
+has_enough_resources(Task): bool
+get_usage(): float
+get_links_load(): float
+assign_task(Task): TaskStates
+revert_assign(Task, TaskStates, bool): None
+get_replaceable_tasks(Task): list[Task]
+ask_assign_task(Task, AssignMode, bool): bool
+progress_tasks(): None
+--
+/_@static_/
+*/generated_nodes: set[FogNode]/*
+/random_nodes(int, tuple, tuple, int, list[tuple], tuple): set[FogNode]/
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>1130</x>
+      <y>140</y>
+      <w>250</w>
+      <h>160</h>
+    </coordinates>
+    <panel_attributes>AssignMode
+--
+neighbours: bool
+qos: bool
+cost: bool
+name: str
+--
+/_@static_/
+*/ALL: AssignMode/*
+/get_all_modes(): list[AssignMode]/
+
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>380</x>
+      <y>150</y>
+      <w>190</w>
+      <h>150</h>
+    </coordinates>
+    <panel_attributes>FogNodesLink
+--
+other: FogNode
+latence: int
+bandwidth: int
+charge: int
+--
+can_handle_charge(int): bool
+get_charge(): int
+get_usage(): float
+
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>460</x>
+      <y>70</y>
+      <w>210</w>
+      <h>100</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-</panel_attributes>
+    <additional_attributes>190.0;10.0;10.0;10.0;10.0;80.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1070</x>
+      <y>70</y>
+      <w>200</w>
+      <h>90</h>
+    </coordinates>
+    <panel_attributes>lt=-&gt;</panel_attributes>
+    <additional_attributes>180.0;70.0;180.0;10.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1240</x>
+      <y>290</y>
+      <w>30</w>
+      <h>110</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-</panel_attributes>
+    <additional_attributes>10.0;90.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>900</x>
+      <y>350</y>
+      <w>120</w>
+      <h>200</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-&gt;</panel_attributes>
+    <additional_attributes>100.0;180.0;10.0;180.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>710</x>
+      <y>350</y>
+      <w>120</w>
+      <h>200</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-&gt;</panel_attributes>
+    <additional_attributes>10.0;180.0;100.0;180.0;100.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>710</x>
+      <y>610</y>
+      <w>310</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-&gt;</panel_attributes>
+    <additional_attributes>10.0;10.0;290.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>150</x>
+      <y>40</y>
+      <w>520</w>
+      <h>90</h>
+    </coordinates>
+    <panel_attributes>lt=-&gt;</panel_attributes>
+    <additional_attributes>10.0;70.0;10.0;10.0;500.0;10.0</additional_attributes>
+  </element>
+</diagram>

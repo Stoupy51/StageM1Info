@@ -5,6 +5,7 @@ from src.task import Task, TaskStates
 from src.fog import FogNode
 from src.utils import AssignMode, random_step
 from src.print import *
+from config import *
 import traci
 import random
 import math
@@ -16,10 +17,10 @@ class Vehicle():
 		""" Vehicle constructor
 		Args:
 			vehicle_id	(str):		ID of the vehicle
-			tasks		(list):		List of tasks for the vehicle (default is empty)
+			tasks		(list[Task]):		List of tasks for the vehicle (default is empty)
 		"""
-		self.vehicle_id = vehicle_id
-		self.tasks = tasks if tasks is not None else []
+		self.vehicle_id: str = vehicle_id
+		self.tasks: list[Task] = tasks if tasks is not None else []
 		self.not_finished_tasks: int = len([task for task in self.tasks if task.state not in [TaskStates.COMPLETED, TaskStates.FAILED]])
 		self.fog_distances: dict[FogNode,float] = {}
 		Vehicle.vehicles.add(self)
@@ -34,7 +35,7 @@ class Vehicle():
 		"""
 		return traci.vehicle.getPosition(self.vehicle_id)
 	
-	def generate_tasks(self, nb_tasks: tuple[int,int] = (1,3), random_resource_args: tuple = Resource.LOW_RANDOM_RESOURCE_ARGS, random_resolution_times: tuple = (1, 5, 1), random_costs: tuple[int,int,int] = Task.COST_RANGE) -> None:
+	def generate_tasks(self, nb_tasks: tuple[int,int] = (1,3), random_resource_args: tuple = Resource.LOW_RANDOM_RESOURCE_ARGS, random_resolution_times: tuple = (1, 5, 1), random_costs: tuple[int,int,int] = COST_RANGE) -> None:
 		""" Generate tasks for the vehicle
 		Args:
 			nb_tasks				(tuple):	Min and Max number of tasks to generate
@@ -47,7 +48,7 @@ class Vehicle():
 			random_resource = Resource.random(*random_resource_args)		# Generate random resource with low values
 			random_resolving_time = random_step(*random_resolution_times)	# Generate random resolving time
 			random_cost = random_step(*random_costs)						# Generate random cost
-			self.tasks.append(Task(task_id, resource = random_resource, resolving_time = random_resolving_time, cost = random_cost))
+			self.tasks.append(Task(task_id, vehicle = self, resource = random_resource, resolving_time = random_resolving_time, cost = random_cost))
 			self.not_finished_tasks += 1
 	
 	def get_nearest_fogs(self) -> list[FogNode]:
@@ -81,7 +82,7 @@ class Vehicle():
 
 		# Try to assign every tasks to the nearest fog node
 		for task in pending_tasks:
-			if nearest_fog.ask_assign_task(self, task, mode = mode):
+			if nearest_fog.ask_assign_task(task, mode = mode):
 				task.change_state(TaskStates.IN_PROGRESS)
 				nb_tasks -= 1
 		
@@ -112,19 +113,6 @@ class Vehicle():
 		for task in self.tasks:
 			if task.state == TaskStates.PENDING:
 				task.change_state(TaskStates.FAILED)
-
-	@staticmethod
-	def get_vehicle_from_id(vehicle_id: str) -> "Vehicle":
-		""" Get a vehicle from its ID
-		Args:
-			vehicle_id	(str):	ID of the vehicle
-		Returns:
-			Vehicle: Vehicle if found, None otherwise
-		"""
-		matching = [vehicle for vehicle in Vehicle.vehicles if vehicle.vehicle_id == vehicle_id]
-		if len(matching) == 0:
-			return None
-		return matching[0]
 	
 	@staticmethod
 	def acknowledge_removed_vehicles() -> None:

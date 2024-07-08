@@ -24,7 +24,7 @@ class Resource():
 		return Resource(self.cpu + other.cpu, self.ram + other.ram, self.storage + other.storage)
 	def __sub__(self, other: "Resource") -> "Resource":
 		return Resource(self.cpu - other.cpu, self.ram - other.ram, self.storage - other.storage)
-	def __mul__(self, other: int) -> "Resource":
+	def __mul__(self, other: float) -> "Resource":
 		return Resource(self.cpu * other, self.ram * other, self.storage * other)
 	def __truediv__(self, other) -> "Resource":
 		if isinstance(other, Resource):
@@ -65,4 +65,12 @@ class Resource():
 		r_ram: int = random_step(*ram)
 		r_storage: int = random_step(*storage)
 		return Resource(r_cpu, r_ram, r_storage)
+	
+	@staticmethod
+	def empty() -> "Resource":
+		""" Return an empty resource (0% CPU, 0MB RAM, 0GB Storage)
+		Returns:
+			Resource: Empty resource
+		"""
+		return Resource(0, 0, 0)
 

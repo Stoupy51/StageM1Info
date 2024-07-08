@@ -14,7 +14,6 @@ import os
 
 # Assign modes
 class AssignMode():
-	NB_ARGS: int = 3
 	def __init__(self, neighbours: bool = False, qos: bool = False, cost: bool = False):
 		self.neighbours = neighbours
 		self.qos = qos
@@ -32,7 +31,7 @@ class AssignMode():
 			self.name = "None"
 	
 	@staticmethod
-	def get_all_assign_modes() -> list[AssignMode]:
+	def get_all_modes() -> list[AssignMode]:
 		""" Get all the assign modes combinations
 		Returns:
 			list[AssignMode]: List of all the assign modes

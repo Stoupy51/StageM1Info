@@ -29,13 +29,13 @@ class FogNode():
 		self.shape: list[tuple] = shape
 		self.color: tuple = color
 		self.resources: Resource = resources
-		self.used_resources = Resource(cpu = 0, ram = 0)
+		self.used_resources = Resource.empty()
 		self.usage: float = 0.0
-		self.assigned_tasks: list[tuple["Vehicle",Task]] = []	# type: ignore
+		self.assigned_tasks: list[Task] = []
 		self.links: list[FogNodesLink] = []
-		traci.polygon.add(polygonID = id, shape = self.get_adjusted_shape(), color = color, fill = True)
 		self.task_distances: float = 0.0	# Indicates the sum of the task distances to their vehicle
 		FogNode.generated_nodes.add(self)
+		traci.polygon.add(polygonID = id, shape = self.get_adjusted_shape(), color = color, fill = True)
 	
 	def __str__(self) -> str:
 		x, y = self.position
@@ -123,21 +123,6 @@ class FogNode():
 				any_reset = True
 		return any_reset
 	
-	@staticmethod
-	def reset_links_charges(fogs: set[FogNode], debug_msg: bool) -> bool:
-		""" Reset the charge of all links of all fog nodes
-		Args:
-			fogs		(set[FogNode]):	Set of fog nodes
-			debug_msg	(bool):			Whether to print debug messages
-		Returns:
-			bool: if any link got a charge before reset
-		"""
-		any_reset: bool = False
-		for fog in fogs:
-			if fog.reset_links_charge(debug_msg):
-				any_reset = True
-		return any_reset
-	
 	def get_links(self) -> list[FogNodesLink]:
 		""" Get the links of the fog node
 		Returns:
@@ -163,7 +148,7 @@ class FogNode():
 		"""
 		return sum(link.get_usage() for link in self.links)
 	
-	def assign_task(self, vehicle: "Vehicle", task: Task) -> TaskStates:	# type: ignore
+	def assign_task(self, task: Task) -> TaskStates:
 		""" Assign a task to the fog node and returns the old state of the task\n
 		Args:
 			vehicle			(Vehicle):		Vehicle to assign the task to
@@ -175,12 +160,12 @@ class FogNode():
 		task.progress(0)
 
 		# Register task and calculate the new usage
-		self.assigned_tasks.append((vehicle, task))
+		self.assigned_tasks.append(task)
 		self.used_resources += task.resource
 		self.calculate_usage()
 
 		# Add up the task distance
-		task.calculate_distance_to_vehicle(vehicle, self)
+		task.calculate_distance_to_vehicle(task.vehicle, self)
 		self.add_task_distance(task.distance_to_vehicle * task.cost)
 
 		return old_state
@@ -190,35 +175,35 @@ class FogNode():
 		Args:
 			assigned_task	(Task):			Task to revert
 			old_state		(TaskStates):	Old state of the task
+			is_last			(bool):			Used for code optimization, the task is at last position of the list if True
 		"""
 		self.used_resources -= assigned_task.resource
 		self.calculate_usage()
 		if is_last:
 			self.assigned_tasks.pop()
 		else:
-			self.assigned_tasks = [(vehicle, task) for vehicle, task in self.assigned_tasks if task is not assigned_task]
+			self.assigned_tasks = [task for task in self.assigned_tasks if task is not assigned_task]
 		if old_state is not None:
 			assigned_task.change_state(old_state)
 	
-	def get_replaceable_tasks(self, incomming_task: Task) -> list[tuple["Vehicle",Task]]:	# type: ignore
+	def get_replaceable_tasks(self, incomming_task: Task) -> list[Task]:
 		""" Get tasks that can be replaced (if we remove the task we have enough resources to accept the incomming one)\n
 		The tasks are sorted by cost and the cost is lower than the incomming task cost
 		Args:
 			incomming_task	(Task):			New task to assign to compare with
 		Returns:
-			list[tuple["Vehicle",Task]]:	List of tasks that can be replaced
+			list[Task]:	List of tasks that can be replaced
 		"""
-		replaceable_tasks: list[tuple["Vehicle", Task]] = [		# type: ignore
-			(vehicle, task) for vehicle, task in self.assigned_tasks
+		replaceable_tasks: list[Task] = [
+			task for task in self.assigned_tasks
 			if (task.cost < incomming_task.cost)													# Task cost is lower than the incomming task cost
 			and (self.used_resources - task.resource + incomming_task.resource) <= self.resources	# We have enough resources to accept the incomming task if we remove the task
 		]
-		return sorted(replaceable_tasks, key = lambda pair: pair[1].cost)
+		return sorted(replaceable_tasks, key = lambda task: task.cost)
 
-	def ask_assign_task(self, vehicle: "Vehicle", incomming_task: Task, mode: AssignMode, from_vehicle: bool = True) -> bool:	# type: ignore
+	def ask_assign_task(self, incomming_task: Task, mode: AssignMode, from_vehicle: bool = True) -> bool:
 		""" Assign a task from a vehicle to the fog node
 		Args:
-			vehicle			(Vehicle):		Vehicle to assign the task to
 			task			(Task):			Task to assign
 			mode			(AssignMode):	Configuration of the assign mode
 			from_vehicle	(bool):			True if the task is from a vehicle, False if it is from a fog node (to prevent too deep recursion)
@@ -232,7 +217,7 @@ class FogNode():
 				from src.evaluations import Evaluator
 
 				old_qos: float = Evaluator.calculate_qos(FogNode.generated_nodes)
-				old_state: TaskStates = self.assign_task(vehicle, incomming_task)
+				old_state: TaskStates = self.assign_task(incomming_task)
 				new_qos: float = Evaluator.calculate_qos(FogNode.generated_nodes)
 
 				if new_qos >= old_qos:
@@ -242,7 +227,7 @@ class FogNode():
 
 			# Else, accept the task as we have enough resources
 			else:
-				self.assign_task(vehicle, incomming_task)
+				self.assign_task(incomming_task)
 				return True
 		
 		# If the task is from a vehicle, try communication with other fog nodes
@@ -250,19 +235,19 @@ class FogNode():
 
 			# For each replaceable tasks, try to assign to each neighbour and stop if any accept
 			if mode.cost:
-				for vehicle, task in self.get_replaceable_tasks(incomming_task):
+				for task in self.get_replaceable_tasks(incomming_task):
 					task_distance: float = task.distance_to_vehicle * task.cost
 					for link in self.links:
 
 						# If the link can handle the charge and the fog node accept the task,
 						if link.can_handle_charge(task.bandwidth_charge) and \
-						link.other.ask_assign_task(vehicle, task, mode = mode, from_vehicle = False):
+						link.other.ask_assign_task(task, mode = mode, from_vehicle = False):
 							debug(f"Moved task {task.id} from {self.id} to {link.other.id} because cost {task.cost} is lower than {incomming_task.cost}. Charge: {task.bandwidth_charge}")
 
 							# Revert assign the task (as the link sended it) to allow the assignment of the incomming one
 							self.revert_assign(task, is_last = False)
 							self.remove_task_distance(task_distance)
-							self.assign_task(vehicle, incomming_task)
+							self.assign_task(incomming_task)
 
 							# Add up the new charge to the link and return True
 							link.charge += task.bandwidth_charge
@@ -274,7 +259,7 @@ class FogNode():
 
 					# If the link can handle the charge and the fog node accept the task,
 					if link.can_handle_charge(incomming_task.bandwidth_charge) and \
-					link.other.ask_assign_task(vehicle, incomming_task, mode = mode, from_vehicle = False):
+					link.other.ask_assign_task(incomming_task, mode = mode, from_vehicle = False):
 						link.charge += incomming_task.bandwidth_charge
 						return True
 		
@@ -284,32 +269,34 @@ class FogNode():
 
 	def progress_tasks(self) -> None:
 		""" Progress the tasks of the fog node, sending the results to the vehicles when completed and removing the tasks from the list """
-		from src.vehicle import Vehicle
-		new_list: list[tuple["Vehicle", Task]] = []
-		for vehicle, task in self.assigned_tasks:
+		new_list: list[Task] = []
+		for task in self.assigned_tasks:
 			task.progress(1)
 			if task.state == TaskStates.COMPLETED:
-				vehicle.receive_task_result(task)
+				task.vehicle.receive_task_result(task)
 
 				self.remove_task_distance(task.distance_to_vehicle * task.cost)
 				self.used_resources -= task.resource
 				self.calculate_usage()
 			else:
-				new_list.append((vehicle, task))
+				new_list.append(task)
 		self.assigned_tasks = new_list
+	
 
 	@staticmethod
-	def get_node_from_id(id: str) -> FogNode:
-		""" Get a fog node from its ID
+	def reset_links_charges(fogs: set[FogNode], debug_msg: bool) -> bool:
+		""" Reset the charge of all links of all fog nodes
 		Args:
-			id	(str):	ID of the fog node
+			fogs		(set[FogNode]):	Set of fog nodes
+			debug_msg	(bool):			Whether to print debug messages
 		Returns:
-			FogNode: Fog node if found, None otherwise
+			bool: if any link got a charge before reset
 		"""
-		matching = [node for node in FogNode.generated_nodes if node.id == id]
-		if len(matching) == 0:
-			return None
-		return matching[0]
+		any_reset: bool = False
+		for fog in fogs:
+			if fog.reset_links_charge(debug_msg):
+				any_reset = True
+		return any_reset
 	
 	@staticmethod
 	def color_usage(fogs: set[FogNode]) -> None:
@@ -361,7 +348,7 @@ class FogNodesLink():
 		""" FogNodesLink constructor
 		Args:
 			other		(FogNode):	Other fog node
-			latence		(int):		Latence of the link
+			latence		(int):		Latence of the link (not used)
 			bandwidth	(int):		Bandwidth of the link (in MB/s)
 		"""
 		self.other: FogNode = other

@@ -17,10 +17,12 @@ K_COST: float = 0.1			# Coefficient for the cost of the tasks multiplied by the 
 FOG_COLOR: tuple = (255, 0, 0, 255)
 FOG_SIZE: int = 50
 FOG_SHAPE: list[tuple] = [(0, 0), (0, FOG_SIZE), (FOG_SIZE, FOG_SIZE), (FOG_SIZE, 0)]
+COST_RANGE: tuple[int,int,int] = (1, 10, 1)
 NB_FOG_NODES: int = 10
 MAX_NEIGHBOURS: int = 5
 RANDOM_DIVIDER: int = 3
 PLOT_INTERVAL: int = 1
+DEBUG_LINKS_CHARGES: bool = False	# Debug the links charges
 
 # Plot resolution
 DPI_MULTIPLIER = 2

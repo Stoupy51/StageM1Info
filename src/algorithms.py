@@ -34,10 +34,12 @@ def solution_algorithm_step(fogs: set[FogNode], assign_mode: AssignMode) -> floa
 	start_time: float = time.perf_counter()
 
 	# Reset fog links charge
-	FogNode.reset_links_charges(fogs, debug_msg = False)
-	# if FogNode.reset_links_charges(fogs, debug_msg = True):
-	# 	print()	# Add a new line for better readability
-
+	if DEBUG_LINKS_CHARGES:
+		if FogNode.reset_links_charges(fogs, debug_msg = True):
+			print()	# Add a new line for better readability
+	else:
+		FogNode.reset_links_charges(fogs, debug_msg = False)
+	
 	# Delete all vehicles that are not in the simulation anymore
 	Vehicle.acknowledge_removed_vehicles()
 
@@ -47,7 +49,7 @@ def solution_algorithm_step(fogs: set[FogNode], assign_mode: AssignMode) -> floa
 	# Generate tasks for each vehicle that has no tasks
 	for vehicle in Vehicle.vehicles:
 		if vehicle.not_finished_tasks == 0:
-			Vehicle.generate_tasks(vehicle)
+			vehicle.generate_tasks()
 	
 	# For each vehicle, calculate their distance to the fogs
 	for vehicle in Vehicle.vehicles:

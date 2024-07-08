@@ -12,7 +12,7 @@ VISUAL_CENTER: tuple[int,int] = (1200, 1600)
 DEBUG_PERF: bool = False
 AUTO_START: bool = True		# --start
 AUTO_QUIT: bool = True		# --quit-on-end
-OPEN_GUI: bool = True		# "sumo-gui" when True, "sumo" when False
+OPEN_GUI: bool = False		# "sumo-gui" when True, "sumo" when False
 
 # Thread method
 def thread(args: tuple[AssignMode, str, tuple[int,int,int]]) -> dict:
