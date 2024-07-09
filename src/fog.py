@@ -296,6 +296,8 @@ class FogNode():
 		for fog in fogs:
 			if fog.reset_links_charge(debug_msg):
 				any_reset = True
+		if any_reset and debug_msg:
+			print()	# Add a new line after the debug messages for better readability
 		return any_reset
 	
 	@staticmethod
