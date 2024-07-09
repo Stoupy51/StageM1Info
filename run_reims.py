@@ -12,7 +12,29 @@ VISUAL_CENTER: tuple[int,int] = (1200, 1600)
 DEBUG_PERF: bool = False
 AUTO_START: bool = True		# --start
 AUTO_QUIT: bool = True		# --quit-on-end
-OPEN_GUI: bool = False		# "sumo-gui" when True, "sumo" when False
+OPEN_GUI: bool = True		# "sumo-gui" when True, "sumo" when False
+
+# Assign modes: uncomment to enable simulation
+ASSIGN_MODES: list[tuple[AssignMode, str, tuple[int,int,int]]] = [
+	# (AssignMode.ALL,								"medium", Resource.MEDIUM_RANDOM_RESOURCE_ARGS),
+	# (AssignMode(neighbours = True, cost = True),	"medium", Resource.MEDIUM_RANDOM_RESOURCE_ARGS),
+	# (AssignMode(neighbours = True),					"medium", Resource.MEDIUM_RANDOM_RESOURCE_ARGS),
+	# (AssignMode(),									"medium", Resource.MEDIUM_RANDOM_RESOURCE_ARGS),
+
+	# (AssignMode.ALL,								"high", Resource.HIGH_RANDOM_RESOURCE_ARGS),
+	(AssignMode(neighbours = True, cost = True),	"high", Resource.HIGH_RANDOM_RESOURCE_ARGS),
+	# (AssignMode(neighbours = True),					"high", Resource.HIGH_RANDOM_RESOURCE_ARGS),
+	# (AssignMode(),									"high", Resource.HIGH_RANDOM_RESOURCE_ARGS),
+
+	# (AssignMode.ALL,								"extreme", Resource.EXTREME_RANDOM_RESOURCE_ARGS),
+	# (AssignMode(neighbours = True, cost = True),	"extreme", Resource.EXTREME_RANDOM_RESOURCE_ARGS),
+	# (AssignMode(neighbours = True),					"extreme", Resource.EXTREME_RANDOM_RESOURCE_ARGS),
+	# (AssignMode(),									"extreme", Resource.EXTREME_RANDOM_RESOURCE_ARGS),
+]
+
+# Disable the GUI opening if too many window
+if OPEN_GUI and len(ASSIGN_MODES) > 4:
+	OPEN_GUI = False
 
 # Thread method
 def thread(args: tuple[AssignMode, str, tuple[int,int,int]]) -> dict:
@@ -31,35 +53,15 @@ def thread(args: tuple[AssignMode, str, tuple[int,int,int]]) -> dict:
 
 # Main method
 if __name__ == "__main__":
-	fog_resources_types: list[tuple[str, tuple[int,int,int]]] = [
-		("high",	Resource.HIGH_RANDOM_RESOURCE_ARGS),
-		#("medium",	Resource.MEDIUM_RANDOM_RESOURCE_ARGS),
-		#("extreme",	Resource.EXTREME_RANDOM_RESOURCE_ARGS),
-	]
-
-	modes_to_use: list[AssignMode] = [
-		#AssignMode.ALL,	# warning: very slow algorithm
-		AssignMode(neighbours = True, cost = True),
-		AssignMode(neighbours = True),
-		AssignMode(),
-	]
-	assign_modes: list[tuple[AssignMode, str, tuple[int,int,int]]] = []
-	for folder, fog_resources in fog_resources_types:
-		assign_modes += [(x, folder, fog_resources) for x in modes_to_use]
 
 	# Run the simulation in multiple threads
-	NB_THREADS: int = len(assign_modes)
+	NB_THREADS: int = len(ASSIGN_MODES)
 	with Pool(processes = NB_THREADS) as pool:
-		evaluations_per_mode: list[dict] = pool.map(thread, assign_modes)
+		evaluations_per_mode: list[dict] = pool.map(thread, ASSIGN_MODES)
 
-	# Get the number of types of fog resources and modes
-	nb_types: int = len(fog_resources_types)
-	nb_modes_per_type: int = len(modes_to_use)
-
-	# For each type, process the results
-	for i in range(nb_types):
-		start_index: int = i * nb_modes_per_type
-		end_index: int = (i + 1) * nb_modes_per_type
-		type_results: list[dict] = evaluations_per_mode[start_index:end_index]
-		process_simulation_evaluations(type_results)
+	# For each preset type, process the results
+	USED_ASSIGN_FOLDERS: list[str] = [folder for mode, folder, args in ASSIGN_MODES]	# Used to generate the output folders
+	for folder in USED_ASSIGN_FOLDERS:
+		evaluations: list[dict] = [x for x in evaluations_per_mode if x["folder"] == folder]
+		process_simulation_evaluations(evaluations)
 

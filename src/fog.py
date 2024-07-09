@@ -212,7 +212,7 @@ class FogNode():
 		"""
 		if self.has_enough_resources(incomming_task):
 
-			# If check_qos, accept the task if the new QoS is better than the old one
+			# If the AssignMode should check QoS: accept the task if the new QoS is better than the old one
 			if mode.qos:
 				from src.evaluations import Evaluator
 
@@ -233,7 +233,7 @@ class FogNode():
 		# If the task is from a vehicle, try communication with other fog nodes
 		if from_vehicle:
 
-			# For each replaceable tasks, try to assign to each neighbour and stop if any accept
+			# If the AssignMode priorize the cost: For each replaceable tasks, try to assign to each neighbour and stop if any accept
 			if mode.cost:
 				for task in self.get_replaceable_tasks(incomming_task):
 					task_distance: float = task.distance_to_vehicle * task.cost
@@ -253,7 +253,7 @@ class FogNode():
 							link.charge += task.bandwidth_charge
 							return True
 
-			# Ask the neighbours if they can assign the task
+			# If the AssignMode authorize neighbours communication: Ask the neighbours if they can assign the task
 			elif mode.neighbours:
 				for link in self.links:
 
