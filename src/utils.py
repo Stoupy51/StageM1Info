@@ -129,14 +129,14 @@ def process_simulation_evaluations(evaluations_per_mode: list[dict]) -> None:
 		evaluations_per_mode (list[dict]): The evaluations of each assign mode
 	"""
 	# Extract all evaluations labels
-	evaluations_labels: list[str] = [key for key in evaluations_per_mode[0].keys() if key not in ["folder", "name"]]
+	evaluations_labels: list[str] = [key for key in evaluations_per_mode[0].keys() if key not in ["folder", "simulation_name", "name"]]
 
 	# For each assign mode, generate its content
-	root_folder: str = '/'.join(evaluations_per_mode[0]["folder"].split('/')[:-1])
+	root_folder: str = '/'.join(evaluations_per_mode[0]["simulation_name"].split('/')[:-1])
 	for data in evaluations_per_mode:
-		folder: str = data["folder"]
+		simulation_name: str = data["simulation_name"]
 		name: str = data["name"]
-		os.makedirs(folder, exist_ok = True)
+		os.makedirs(simulation_name, exist_ok = True)
 		for label in evaluations_labels:
 			minimized_label: str = "".join(c for c in label.replace(" ", "_").lower() if c.isalnum() or c in ['_'])
 			plt.clf()
@@ -144,10 +144,10 @@ def process_simulation_evaluations(evaluations_per_mode: list[dict]) -> None:
 			plt.title(f"{label} over time - {name}")
 			plt.xlabel("Simulation Step")
 			plt.ylabel(label)
-			plt.savefig(f"{folder}/{minimized_label}.png", dpi = DPI_MULTIPLIER * plt.rcParams["figure.dpi"])
+			plt.savefig(f"{simulation_name}/{minimized_label}.png", dpi = DPI_MULTIPLIER * plt.rcParams["figure.dpi"])
 		
 		# Save data
-		with open(f"{folder}/data.json", "w", encoding = "utf-8") as file:
+		with open(f"{simulation_name}/data.json", "w", encoding = "utf-8") as file:
 			super_json_dump(data, file, max_level = 1)
 
 	# Save data

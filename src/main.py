@@ -17,12 +17,13 @@ def run_simulation(
 		assign_mode: AssignMode,
 		sumo_config: str,
 		visual_center: tuple[int,int],
+		folder: str,
 		seed: int = 0,
 		debug_perf: bool = False,
 		auto_start: bool = True,
 		auto_quit: bool = True,
 		open_gui: bool = True,
-		fog_resources: tuple[int,int,int] = Resource.HIGH_RANDOM_RESOURCE_ARGS
+		fog_resources: tuple[int,int,int] = Resource.HIGH_RANDOM_RESOURCE_ARGS,
 	) -> dict:
 	""" Run a simulation with the given parameters\n
 	It will generates multiple plots such as the QoS over time, the fog nodes resources, etc.\n
@@ -30,6 +31,8 @@ def run_simulation(
 		simulation_name	(str):			Name of the simulation (used for the output files)
 		assign_mode		(AssignMode):	Assign mode to use for the simulation steps
 		sumo_config		(str):			Sumo configuration file to use
+		visual_center	(tuple):		Center of the map visually (used to place randomly fog nodes around)
+		folder			(str):			Not used, but kept in the return dict for identification
 		seed			(int):			Seed to use for the simulation (default: 0)
 		debug_perf		(bool):			Whether to debug the performance of the simulation (default: False)
 		auto_start		(bool):			Whether to start the simulation automatically (default: True)	(adding '--start')
@@ -126,7 +129,8 @@ def run_simulation(
 
 	# Prepeare the return dictionnary
 	r_dict = {
-		"folder": simulation_name,
+		"folder": folder,
+		"simulation_name": simulation_name,
 		"name": simplified_name,
 		"QoS Evaluations": qos_history,
 		"Allocated Tasks": allocated_tasks_history,
@@ -142,7 +146,7 @@ def run_simulation(
 
 	# Add cumulative arrays
 	for key, value in list(r_dict.items()):
-		if key not in ["folder", "name"]:
+		if key not in ["folder", "simulation_name", "name"]:
 			r_dict[f"Cumulative {key}"] = [sum(value[:i]) for i in range(len(value))]
 
 	# Return the dict

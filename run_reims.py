@@ -43,6 +43,7 @@ def thread(args: tuple[AssignMode, str, tuple[int,int,int]]) -> dict:
 		assign_mode = args[0],
 		sumo_config = SUMO_CONFIG,
 		visual_center = VISUAL_CENTER,
+		folder = args[1],
 		seed = SEED,
 		debug_perf = DEBUG_PERF,
 		auto_start = AUTO_START,
